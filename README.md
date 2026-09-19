@@ -5,6 +5,7 @@ A Mobile-Based Phone Refurbishment Cost and Profit Tracking System
 An app for small cellphone repair shops. It records each phone's buy-repair-resell cycle and automatically computes total investment and profit or loss per unit. Built for AJ Cellphone Repair Shop and Accessories, Tagum City.
 
 **Features**
+
 1.Job type toggle: Buy & Resell or Customer Repair
 
 2.Staff login (Firebase Authentication)
