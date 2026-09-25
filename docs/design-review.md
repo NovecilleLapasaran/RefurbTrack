@@ -1,0 +1,15 @@
+# Anti Slop review
+
+Scope: classroom preview, reviewed September 25–26, 2026. This is a record of observed checks, not full installed-device approval.
+
+- **PASS, design direction (R-37):** `DESIGN.md` derives navy/teal, a light working surface, and workshop terminology from the supplied RefurbTrack infographic and concept paper. Dials: ENERGY 2, RHYTHM 1, MOTION 1.
+- **PASS, purpose:** Financial totals use navy to emphasize the decision; teal distinguishes selected choices and primary actions. Expense rows share a layout because users compare the same fields. No decorative gradients, glows, animated loops, or invented illustrations were added.
+- **PASS, copy and claims (R-17, R-18, R-36, R-38):** Fictional demo amounts are labeled. The materials distinguish the source paper's one-respondent needs assessment, observed software tests, and pending client acceptance. No fabricated customer quotes, adoption counts, revenue gains, or timing results appear.
+- **PASS, contrast sample (R-25):** White/teal 6.40:1, muted text/page 5.85:1, input border/white 3.21:1. These exceed the relevant text or non-text thresholds.
+- **PASS, observed phone layout (R-03):** Inspected 390 × 844 screenshots of the demonstrated lifecycle, costs, profit, and history. Inputs and actions fit the viewport; button focus has a visible outline. Native scaling and landscape still require the device checks below.
+- **PASS, implemented states (R-27):** Empty-account guidance, authentication restoration, loading, required-field feedback, saved notices, access errors, and cached-connection notice have concrete implementations. Blank-brand feedback and a fresh empty cloud workspace were observed.
+- **PASS, core behavior evidence (C-2):** Resale practice walkthrough and customer-repair cloud walkthrough produced the expected profit. Cloud record edits, session reload, search, and combined filters were observed. All 20 domain tests, 21 Expo checks, live Firebase access checks, and the APK build passed.
+- **PASS, artifact layout:** Reviewed the 15 documentation pages, two spiel pages, and all 11 slides; corrected table column widths, duplicate page numbering, blank overflow pages, and title styling. Contents references match rendered pages. PowerPoint package/layout/import validation passed.
+- **NOT VERIFIED, complete interaction gate (R-35):** Native confirmation dialogs, Android sharing, password-reset delivery, system Back, TalkBack, text scaling, offline recovery, and installed-app startup have not all been exercised. Browser dialog/download automation did not provide evidence of successful completion. The built APK and `verification.md` supply the next test steps; a full Anti Slop interaction PASS is not claimed.
+
+The existing starter app icon remains in this release. The user supplied product colors and concept imagery, but no separate launcher-logo asset was substituted. Cloud use is intended for trusted shop staff; the schema and operational limits are recorded in the documentation.

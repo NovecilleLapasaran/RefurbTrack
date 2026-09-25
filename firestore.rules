@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function staff(shopId) {
+      return request.auth != null && (request.auth.uid == shopId ||
+        exists(/databases/$(database)/documents/shops/$(shopId)/members/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/shops/$(shopId)/members/$(request.auth.uid)).data.active == true);
+    }
+    function validRecord(d) {
+      return d.keys().hasAll(['id','jobType','brand','model','condition','source','purchase','acquiredAt','notes','status','expenses','sale','diagnosis','feasibility','estimate','history','createdAt','createdBy','updatedAt','version'])
+        && d.keys().hasOnly(['id','jobType','brand','model','condition','source','purchase','acquiredAt','notes','status','expenses','sale','diagnosis','feasibility','estimate','history','createdAt','createdBy','updatedAt','version'])
+        && d.jobType in ['resale','repair'] && d.brand is string && d.brand.size() > 0 && d.brand.size() <= 60
+        && d.model is string && d.model.size() > 0 && d.model.size() <= 80
+        && d.condition is string && d.condition.size() > 0 && d.condition.size() <= 500
+        && d.source is string && d.source.size() > 0 && d.source.size() <= 120
+        && d.notes is string && d.notes.size() <= 1000
+        && d.diagnosis is string && d.diagnosis.size() <= 1000
+        && d.feasibility is string && d.feasibility.size() <= 1000
+        && d.purchase is int && d.purchase >= 0 && d.purchase <= 1000000000
+        && (d.jobType == 'resale' || d.purchase == 0)
+        && d.estimate is int && d.estimate >= 0 && d.estimate <= 1000000000
+        && d.expenses is list && d.expenses.size() <= 200
+        && d.history is list && d.history.size() <= 100
+        && d.acquiredAt is string && d.acquiredAt.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.createdAt is string && d.updatedAt is string && d.createdBy is string
+        && d.version is int && d.version > 0
+        && ((d.jobType == 'resale' && d.status in ['Acquired','Evaluated','Waiting for Parts','Repairing','Ready for Sale','Unsold','Sold','Not Worth Repairing'])
+          || (d.jobType == 'repair' && d.status in ['Received','Repairing','Waiting for Parts','Ready for Pickup','Released','Not Worth Repairing']))
+        && ((d.status in ['Sold','Released'] && d.sale is map
+          && d.sale.keys().hasOnly(['amount','date','buyer','warranty'])
+          && d.sale.amount is int && d.sale.amount >= 0 && d.sale.amount <= 1000000000
+          && d.sale.date is string && d.sale.date >= d.acquiredAt
+          && d.sale.buyer is string && d.sale.buyer.size() <= 120
+          && d.sale.warranty is string && d.sale.warranty.size() <= 300)
+          || (!(d.status in ['Sold','Released']) && d.sale == null));
+    }
+    match /shops/{shopId}/members/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == shopId || request.auth.uid == uid);
+      // Staff membership is provisioned through the Firebase console, never self-assigned.
+      allow write: if false;
+    }
+    match /shops/{shopId}/records/{recordId} {
+      allow read: if staff(shopId);
+      allow create: if staff(shopId) && validRecord(request.resource.data)
+        && request.resource.data.id == recordId && request.resource.data.version == 1
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if staff(shopId) && validRecord(request.resource.data)
+        && request.resource.data.id == recordId
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.jobType == resource.data.jobType
+        && request.resource.data.version == resource.data.version + 1;
+      allow delete: if staff(shopId);
+    }
+  }
+}
