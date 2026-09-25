@@ -24,6 +24,6 @@ Presentation flow: 5 minutes pitching, 3 minutes demo, 5–7 minutes Q&A, 3 minu
 - [ ] Obtain a real client acceptance decision. The supplied unsigned form is not evidence of acceptance.
 - [ ] Repository owner invites https://github.com/mariceltimbal as collaborator and verifies acceptance. Current CLI account has WRITE access but could not issue the invitation (GitHub returned 404).
 - [ ] Keep professor access until grades are released, then the owner removes it as instructed.
-- [ ] Commit and push to the same repository; do not publish credentials, real customer records, or private exports.
+- [x] Commit and push to the same repository. App and submission materials published in commit `8c143c4`; local credentials and disposable test fixtures excluded.
 - [ ] Upload final files manually and verify they open from the shared folder.
 - [ ] Bring APK/download link, repository link, backup presentation copy, and phone charger.

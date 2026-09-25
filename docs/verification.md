@@ -22,6 +22,8 @@ APK and document delivery checks completed September 26. The downloaded APK is 7
 
 ## Android release
 
+Application source and submission materials were committed and pushed to `main` as `8c143c4` (Lab 14). Later documentation-only handoff updates do not change the built application.
+
 Expo project: https://expo.dev/accounts/wrnzn/projects/RefurbTrack
 
 Build ID: `bb99acb3-d31b-443a-b553-57dc538bec52`

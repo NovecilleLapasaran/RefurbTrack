@@ -39,6 +39,7 @@ artifacts/qa/
 firebase-debug.log
 firestore-debug.log
 *.apk
+/releases/
 
 # typescript
 *.tsbuildinfo
