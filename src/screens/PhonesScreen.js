@@ -1,32 +1,66 @@
 import React, { useState } from 'react';
-import {
-  FlatList,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  Button,
+  Card,
+  Chip,
+  IconButton,
+  Text,
+} from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 
-import { formatPeso, referenceOf, useAppContext } from '../context/AppContext';
+import {
+  CLOSED_STATUSES,
+  formatPeso,
+  investmentOf,
+  referenceOf,
+  UNIT_STATUSES,
+  useAppContext,
+} from '../context/AppContext';
 import { theme } from '../theme/theme';
 
-const investmentOf = (phone) =>
-  Number(phone.purchasePrice || 0) +
-  Number(phone.partsCost || 0) +
-  Number(phone.laborCost || 0) +
-  Number(phone.otherExpenses || 0);
+const StatusPicker = ({ title, options, current, onSelect }) => (
+  <View>
+    <Text variant="labelMedium" style={styles.statusLabel}>
+      {title}
+    </Text>
+    <View style={styles.statusChipRow}>
+      {options.map((status) => {
+        const active = status === current;
+        return (
+          <Chip
+            key={status}
+            mode={active ? 'flat' : 'outlined'}
+            selected={active}
+            style={[styles.statusChip, active && styles.statusChipActive]}
+            selectedColor={theme.primary}
+            onPress={() => onSelect(status)}
+          >
+            {status}
+          </Chip>
+        );
+      })}
+    </View>
+  </View>
+);
 
 const PhonesScreen = () => {
-  const { phoneRecords, deletePhone } = useAppContext();
+  const { phoneRecords, deletePhone, editPhone } = useAppContext();
   const [selectedId, setSelectedId] = useState(null);
   const navigation = useNavigation();
 
   // BACKEND: after each mutation, refresh phoneRecords from
   // GET /api/units so every screen reflects server state.
+  // Status lives here on the Units screen (moved out of the add form):
+  // changing it writes straight back to the record.
+  // BACKEND: await fetch(`https://YOUR_API/units/${phone.id}`, { method: 'PATCH',
+  //   headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
+  const handleStatusChange = (phone, status) => {
+    if (status === phone.status) return;
+    editPhone({ ...phone, status });
+  };
+
   const handleEditPhone = (phone) => {
     navigation.navigate('AddPhone', { phone });
   };
@@ -37,113 +71,179 @@ const PhonesScreen = () => {
     setSelectedId(null);
   };
 
+  const DetailRow = ({ label, value }) => (
+    <View style={styles.detailRow}>
+      <Text variant="bodyMedium" style={styles.muted}>
+        {label}
+      </Text>
+      <Text variant="bodyMedium" style={styles.detailValue}>
+        {value}
+      </Text>
+    </View>
+  );
+
   const renderItem = ({ item }) => {
     const expanded = selectedId === item.id;
+    const currentStatus = item.status || 'Acquired';
 
     return (
-      <View style={styles.card}>
-        <TouchableOpacity
-          activeOpacity={0.75}
-          onPress={() => setSelectedId(expanded ? null : item.id)}
-        >
+      <Card
+        mode="outlined"
+        style={styles.card}
+        onPress={() => setSelectedId(expanded ? null : item.id)}
+      >
+        <Card.Content>
           <View style={styles.cardHeader}>
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardMeta}>
-                {referenceOf(item)} · {item.jobType || 'Repair job'}
-              </Text>
-              <Text style={styles.cardTitle}>{item.name || 'Untitled unit'}</Text>
-              {item.issue ? (
-                <Text style={styles.cardIssue}>{item.issue}</Text>
-              ) : null}
-            </View>
-            <View style={styles.statusPill}>
-              <Text style={styles.statusPillText}>{item.status || 'Acquired'}</Text>
-            </View>
-          </View>
-
-          <View style={styles.cardFigures}>
-            <View style={styles.figure}>
-              <Text style={styles.figureLabel}>Invested</Text>
-              <Text style={styles.figureValue}>{formatPeso(investmentOf(item))}</Text>
-            </View>
-            <View style={styles.figure}>
-              <Text style={styles.figureLabel}>Revenue</Text>
-              <Text style={styles.figureValue}>
-                {formatPeso(item.revenue || item.amountCharged || 0)}
-              </Text>
-            </View>
-            <MaterialCommunityIcons
-              name={expanded ? 'chevron-up' : 'chevron-down'}
-              size={22}
-              color={theme.textMuted}
-            />
-          </View>
-        </TouchableOpacity>
-
-        {expanded && (
-          <View style={styles.details}>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Reference</Text>
-              <Text style={styles.detailValue}>{referenceOf(item)}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Name</Text>
-              <Text style={styles.detailValue}>{item.name || '—'}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Job type</Text>
-              <Text style={styles.detailValue}>{item.jobType || '—'}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Issue</Text>
-              <Text style={styles.detailValue}>{item.issue || '—'}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Source</Text>
-              <Text style={styles.detailValue}>{item.source || '—'}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Status</Text>
-              <Text style={styles.detailValue}>{item.status || 'Acquired'}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Parts + labor</Text>
-              <Text style={styles.detailValue}>
-                {formatPeso(
-                  Number(item.partsCost || 0) + Number(item.laborCost || 0)
-                )}
-              </Text>
+              <View style={styles.cardInfo}>
+                <Text variant="bodyMedium" style={styles.muted}>
+                  {referenceOf(item)} · {item.jobType || 'Repair job'}
+                </Text>
+                <Text variant="titleLarge" style={styles.cardTitle}>
+                  {item.name || 'Untitled unit'}
+                </Text>
+                {item.issue ? (
+                  <Text variant="bodyMedium" style={styles.muted}>
+                    {item.issue}
+                  </Text>
+                ) : null}
+              </View>
+              <View style={styles.statusBadge}>
+                <Text variant="labelSmall" style={styles.statusBadgeText}>
+                  {currentStatus}
+                </Text>
+              </View>
             </View>
 
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                activeOpacity={0.85}
-                onPress={() => handleEditPhone(item)}
-              >
-                <MaterialCommunityIcons
-                  name="pencil-outline"
-                  size={16}
-                  color={theme.primary}
+            <View style={styles.cardFigures}>
+              <View style={styles.figure}>
+                <Text variant="bodySmall" style={styles.muted}>
+                  Invested
+                </Text>
+                <Text variant="titleMedium" style={styles.figureValue}>
+                  {formatPeso(investmentOf(item))}
+                </Text>
+              </View>
+              <View style={styles.figure}>
+                <Text variant="bodySmall" style={styles.muted}>
+                  Revenue
+                </Text>
+                <Text variant="titleMedium" style={styles.figureValue}>
+                  {formatPeso(item.revenue || item.amountCharged || 0)}
+                </Text>
+              </View>
+              <IconButton
+                icon={expanded ? 'chevron-up' : 'chevron-down'}
+                size={22}
+                style={styles.chevron}
+              />
+            </View>
+
+          {expanded && (
+            <View style={styles.details}>
+              <StatusPicker
+                title="Status"
+                options={UNIT_STATUSES}
+                current={currentStatus}
+                onSelect={(status) => handleStatusChange(item, status)}
+              />
+              <StatusPicker
+                title="Close unit"
+                options={CLOSED_STATUSES}
+                current={item.status}
+                onSelect={(status) => handleStatusChange(item, status)}
+              />
+
+              <View style={styles.detailBlock}>
+                <DetailRow label="Reference" value={referenceOf(item)} />
+                <DetailRow label="Name" value={item.name || '—'} />
+                {item.brand || item.model ? (
+                  <DetailRow
+                    label="Brand / model"
+                    value={[item.brand, item.model].filter(Boolean).join(' ')}
+                  />
+                ) : null}
+                <DetailRow label="Job type" value={item.jobType || '—'} />
+                {item.condition ? (
+                  <DetailRow label="Condition" value={item.condition} />
+                ) : null}
+                <DetailRow label="Issue" value={item.issue || '—'} />
+                <DetailRow label="Source" value={item.source || '—'} />
+                {item.date ? (
+                  <DetailRow label="Date acquired" value={item.date} />
+                ) : null}
+                {item.diagnosis ? (
+                  <DetailRow label="Diagnosis" value={item.diagnosis} />
+                ) : null}
+                {item.feasibility ? (
+                  <DetailRow label="Feasibility" value={item.feasibility} />
+                ) : null}
+                {item.estimatedRepairCost ? (
+                  <DetailRow
+                    label="Est. repair cost"
+                    value={formatPeso(item.estimatedRepairCost)}
+                  />
+                ) : null}
+                {item.intakeNotes ? (
+                  <DetailRow label="Intake notes" value={item.intakeNotes} />
+                ) : null}
+
+                {Array.isArray(item.expenseItems) && item.expenseItems.length ? (
+                  <View style={styles.expenseBlock}>
+                    <Text variant="labelMedium" style={styles.muted}>
+                      Expense entries
+                    </Text>
+                    {item.expenseItems.map((entry, index) => (
+                      <View
+                        key={`${item.id}-expense-${index}`}
+                        style={styles.detailRow}
+                      >
+                        <Text variant="bodyMedium" style={styles.detailValue}>
+                          {entry.name}
+                        </Text>
+                        <Text variant="bodyMedium" style={styles.detailValue}>
+                          {formatPeso(entry.cost)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+
+                <DetailRow
+                  label="Parts + labor"
+                  value={formatPeso(
+                    Number(item.partsCost || 0) + Number(item.laborCost || 0)
+                  )}
                 />
-                <Text style={styles.secondaryButtonText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.dangerButton}
-                activeOpacity={0.85}
-                onPress={() => handleDeletePhone(item)}
-              >
-                <MaterialCommunityIcons
-                  name="trash-can-outline"
-                  size={16}
-                  color={theme.error}
-                />
-                <Text style={styles.dangerButtonText}>Delete</Text>
-              </TouchableOpacity>
+              </View>
+
+              <View style={styles.actions}>
+                <Button
+                  mode="contained"
+                  icon="pencil"
+                  compact
+                  contentStyle={styles.buttonContent}
+                  labelStyle={styles.buttonLabel}
+                  onPress={() => handleEditPhone(item)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  mode="outlined"
+                  icon="trash-can-outline"
+                  compact
+                  textColor={theme.error}
+                  style={styles.dangerButton}
+                  contentStyle={styles.buttonContent}
+                  labelStyle={styles.buttonLabel}
+                  onPress={() => handleDeletePhone(item)}
+                >
+                  Delete
+                </Button>
+              </View>
             </View>
-          </View>
-        )}
-      </View>
+          )}
+        </Card.Content>
+      </Card>
     );
   };
 
@@ -151,19 +251,29 @@ const PhonesScreen = () => {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Text style={styles.title}>Units</Text>
-          <Text style={styles.subtitle}>
-            {phoneRecords.length} total · {phoneRecords.filter((p) => !['Sold', 'Released', 'Written off'].includes(p.status)).length} on the bench
+          <Text variant="headlineSmall" style={styles.screenTitle}>
+            Units
+          </Text>
+          <Text variant="bodyMedium" style={styles.muted}>
+            {phoneRecords.length} total ·{' '}
+            {
+              phoneRecords.filter(
+                (p) => !CLOSED_STATUSES.includes(p.status)
+              ).length
+            }{' '}
+            on the bench
           </Text>
         </View>
-        <TouchableOpacity
-          style={styles.newButton}
-          activeOpacity={0.85}
+        <Button
+          mode="contained"
+          icon="plus"
+          compact
+          contentStyle={styles.buttonContent}
+          labelStyle={styles.buttonLabel}
           onPress={() => navigation.navigate('AddPhone')}
         >
-          <MaterialCommunityIcons name="plus" size={18} color={theme.textOnPrimary} />
-          <Text style={styles.newButtonText}>New</Text>
-        </TouchableOpacity>
+          New
+        </Button>
       </View>
 
       <FlatList
@@ -173,16 +283,13 @@ const PhonesScreen = () => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <View style={styles.emptyCard}>
-            <MaterialCommunityIcons
-              name="clipboard-text-outline"
-              size={28}
-              color={theme.textMuted}
-            />
-            <Text style={styles.emptyText}>
-              No units yet. Tap “New” to log the first phone on your bench.
-            </Text>
-          </View>
+          <Card mode="contained" style={styles.emptyCard}>
+            <Card.Content style={styles.emptyContent}>
+              <Text variant="bodyMedium" style={styles.muted}>
+                No units yet. Tap “New” to log the first phone on your bench.
+              </Text>
+            </Card.Content>
+          </Card>
         }
       />
     </SafeAreaView>
@@ -206,30 +313,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: theme.spacing.medium,
   },
-  title: {
-    fontSize: theme.typography.h1.fontSize,
-    fontWeight: theme.typography.h1.fontWeight,
-    letterSpacing: theme.typography.h1.letterSpacing,
+  screenTitle: {
     color: theme.text,
+    fontWeight: '700',
   },
-  subtitle: {
-    marginTop: 4,
-    fontSize: theme.typography.body2.fontSize,
+  muted: {
     color: theme.textMuted,
   },
-  newButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.primary,
-    borderRadius: theme.roundness.medium,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+  buttonContent: {
+    height: 44,
   },
-  newButtonText: {
-    color: theme.textOnPrimary,
-    fontSize: theme.typography.label.fontSize,
+  buttonLabel: {
     fontWeight: '700',
-    marginLeft: 6,
+    fontSize: theme.typography.label.fontSize,
   },
   listContent: {
     paddingHorizontal: theme.spacing.medium,
@@ -238,14 +334,12 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: theme.surface,
-    borderRadius: theme.roundness.large,
-    borderWidth: 1,
     borderColor: theme.border,
-    padding: 16,
+    borderRadius: theme.roundness.large,
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
   cardInfo: {
@@ -253,31 +347,19 @@ const styles = StyleSheet.create({
     paddingRight: theme.spacing.small,
   },
   cardTitle: {
-    marginTop: 6,
     color: theme.text,
-    fontSize: theme.typography.body1.fontSize + 3,
     fontWeight: '700',
+    marginVertical: 4,
     letterSpacing: -0.3,
   },
-  cardMeta: {
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-    fontWeight: '600',
-  },
-  cardIssue: {
-    marginTop: 4,
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-  },
-  statusPill: {
+  statusBadge: {
     backgroundColor: theme.primarySoft,
     borderRadius: theme.roundness.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  statusPillText: {
+  statusBadgeText: {
     color: theme.primary,
-    fontSize: theme.typography.caption.fontSize,
     fontWeight: '700',
   },
   cardFigures: {
@@ -289,88 +371,78 @@ const styles = StyleSheet.create({
   figure: {
     flex: 1,
   },
-  figureLabel: {
-    color: theme.textMuted,
-    fontSize: theme.typography.caption.fontSize,
-    marginBottom: 2,
-  },
   figureValue: {
     color: theme.text,
-    fontSize: theme.typography.body1.fontSize,
     fontWeight: '700',
+    marginTop: 2,
+  },
+  chevron: {
+    margin: 0,
+    alignSelf: 'flex-end',
   },
   details: {
     marginTop: 14,
     paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: theme.border,
+    gap: 12,
+  },
+  statusLabel: {
+    color: theme.textMuted,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  statusChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  statusChip: {
+    backgroundColor: theme.surface,
+    borderColor: theme.border,
+    borderRadius: theme.roundness.pill,
+  },
+  statusChipActive: {
+    backgroundColor: theme.primarySoft,
+    borderColor: theme.primary,
+  },
+  detailBlock: {
     gap: 8,
   },
   detailRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  detailLabel: {
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
+    justifyContent: 'space-between',
+    gap: theme.spacing.small,
   },
   detailValue: {
     color: theme.text,
-    fontSize: theme.typography.body2.fontSize,
     fontWeight: '600',
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  expenseBlock: {
+    gap: 6,
+    paddingVertical: 4,
   },
   actions: {
     flexDirection: 'row',
     gap: theme.spacing.small,
-    marginTop: theme.spacing.small,
-  },
-  secondaryButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: theme.primarySoft,
-    borderRadius: theme.roundness.medium,
-    paddingVertical: 12,
-  },
-  secondaryButtonText: {
-    color: theme.primary,
-    fontSize: theme.typography.label.fontSize,
-    fontWeight: '700',
+    marginTop: 4,
   },
   dangerButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
     backgroundColor: theme.surface,
-    borderWidth: 1,
     borderColor: theme.border,
-    borderRadius: theme.roundness.medium,
-    paddingVertical: 12,
-  },
-  dangerButtonText: {
-    color: theme.error,
-    fontSize: theme.typography.label.fontSize,
-    fontWeight: '700',
   },
   emptyCard: {
-    alignItems: 'center',
     backgroundColor: theme.surface,
-    borderRadius: theme.roundness.large,
-    borderWidth: 1,
     borderColor: theme.border,
-    padding: 28,
-    gap: 10,
+    borderRadius: theme.roundness.large,
+    marginTop: theme.spacing.medium,
   },
-  emptyText: {
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-    textAlign: 'center',
-    lineHeight: 20,
+  emptyContent: {
+    alignItems: 'center',
+    paddingVertical: 28,
   },
 });
 

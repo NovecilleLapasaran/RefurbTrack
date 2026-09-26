@@ -4,15 +4,19 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  Button,
+  Chip,
+  IconButton,
+  Surface,
+  Text,
+  TextInput,
+} from 'react-native-paper';
 
-import { UNIT_STATUSES, useAppContext } from '../context/AppContext';
+import { formatPeso, investmentOf, useAppContext } from '../context/AppContext';
 import { theme } from '../theme/theme';
 
 const JOB_TYPES = ['Buy & Resell', 'Customer Repair'];
@@ -22,16 +26,16 @@ const ChipRow = ({ options, value, onChange }) => (
     {options.map((option) => {
       const active = option === value;
       return (
-        <TouchableOpacity
+        <Chip
           key={option}
-          activeOpacity={0.8}
+          mode={active ? 'flat' : 'outlined'}
+          selected={active}
           style={[styles.chip, active && styles.chipActive]}
+          selectedColor={theme.primary}
           onPress={() => onChange(option)}
         >
-          <Text style={[styles.chipText, active && styles.chipTextActive]}>
-            {option}
-          </Text>
-        </TouchableOpacity>
+          {option}
+        </Chip>
       );
     })}
   </View>
@@ -41,11 +45,19 @@ const AddPhoneScreen = ({ route, navigation }) => {
   const editing = route?.params?.phone;
   const { addPhone, editPhone } = useAppContext();
 
-  const [name, setName] = useState(editing?.name || '');
+  // ---- Intake (feature C) -------------------------------------------
+  const [brand, setBrand] = useState(editing?.brand || '');
+  const [model, setModel] = useState(editing?.model || editing?.name || '');
+  const [condition, setCondition] = useState(editing?.condition || '');
   const [issue, setIssue] = useState(editing?.issue || '');
   const [source, setSource] = useState(editing?.source || '');
+  const [date, setDate] = useState(editing?.date || '');
+  const [intakeNotes, setIntakeNotes] = useState(editing?.intakeNotes || '');
+
+  // ---- Job type (feature A) -----------------------------------------
   const [jobType, setJobType] = useState(editing?.jobType || JOB_TYPES[0]);
-  const [status, setStatus] = useState(editing?.status || 'Acquired');
+
+  // ---- Money (features C + E) ---------------------------------------
   const [purchasePrice, setPurchasePrice] = useState(
     editing?.purchasePrice ? String(editing.purchasePrice) : ''
   );
@@ -61,7 +73,55 @@ const AddPhoneScreen = ({ route, navigation }) => {
   const [revenue, setRevenue] = useState(
     editing?.revenue ? String(editing.revenue) : ''
   );
+
+  // Expense entries per unit (feature E): one name + cost row each.
+  const [expenseItems, setExpenseItems] = useState(
+    Array.isArray(editing?.expenseItems) && editing.expenseItems.length
+      ? editing.expenseItems.map((item) => ({
+          name: String(item.name || ''),
+          cost: String(item.cost ?? ''),
+        }))
+      : []
+  );
+
+  // ---- Evaluation & diagnosis (feature D) ---------------------------
+  const [diagnosis, setDiagnosis] = useState(editing?.diagnosis || '');
+  const [feasibility, setFeasibility] = useState(editing?.feasibility || '');
+  const [estimatedRepairCost, setEstimatedRepairCost] = useState(
+    editing?.estimatedRepairCost ? String(editing.estimatedRepairCost) : ''
+  );
+
   const [error, setError] = useState('');
+
+  const updateExpense = (index, field, value) => {
+    setExpenseItems((items) =>
+      items.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const addExpense = () => {
+    setExpenseItems((items) => [...items, { name: '', cost: '' }]);
+  };
+
+  const removeExpense = (index) => {
+    setExpenseItems((items) => items.filter((_, i) => i !== index));
+  };
+
+  const cleanedExpenseItems = expenseItems
+    .filter((item) => item.name.trim() || Number(item.cost))
+    .map((item) => ({
+      name: item.name.trim() || 'Part',
+      cost: Number(item.cost) || 0,
+    }));
+
+  // Running investment total, updated while typing (feature E).
+  const runningInvestment = investmentOf({
+    purchasePrice: Number(purchasePrice) || 0,
+    partsCost: Number(partsCost) || 0,
+    laborCost: Number(laborCost) || 0,
+    otherExpenses: Number(otherExpenses) || 0,
+    expenseItems: cleanedExpenseItems,
+  });
 
   // ---------------------------------------------------------------------
   // BACKEND: saving a unit
@@ -70,25 +130,34 @@ const AddPhoneScreen = ({ route, navigation }) => {
   // Then refresh the list (AppContext holds the records) with the response.
   // ---------------------------------------------------------------------
   const handleSave = () => {
-    if (!name.trim()) {
-      setError('Give this unit a name first.');
+    if (!brand.trim() && !model.trim()) {
+      setError('Add a brand and model first.');
       return;
     }
 
     const record = {
       id: editing?.id,
       reference: editing?.reference,
-      name: name.trim(),
+      brand: brand.trim(),
+      model: model.trim(),
+      name: [brand.trim(), model.trim()].filter(Boolean).join(' '),
+      condition: condition.trim(),
       issue: issue.trim(),
       source: source.trim(),
+      date:
+        date.trim() || editing?.date || new Date().toISOString().slice(0, 10),
+      intakeNotes: intakeNotes.trim(),
       jobType,
-      status,
+      status: editing?.status,
       purchasePrice: Number(purchasePrice) || 0,
       partsCost: Number(partsCost) || 0,
       laborCost: Number(laborCost) || 0,
       otherExpenses: Number(otherExpenses) || 0,
+      expenseItems: cleanedExpenseItems,
+      diagnosis: diagnosis.trim(),
+      feasibility: feasibility.trim(),
+      estimatedRepairCost: Number(estimatedRepairCost) || 0,
       revenue: Number(revenue) || 0,
-      date: editing?.date || new Date().toISOString().slice(0, 10),
     };
 
     if (editing) editPhone(record);
@@ -100,14 +169,15 @@ const AddPhoneScreen = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>{editing ? 'Edit unit' : 'New unit'}</Text>
-        <TouchableOpacity
-          style={styles.closeButton}
-          activeOpacity={0.8}
+        <Text variant="headlineSmall" style={styles.screenTitle}>
+          {editing ? 'Edit unit' : 'New unit'}
+        </Text>
+        <IconButton
+          icon="close"
+          mode="outlined"
+          size={20}
           onPress={() => navigation.goBack()}
-        >
-          <MaterialCommunityIcons name="close" size={20} color={theme.text} />
-        </TouchableOpacity>
+        />
       </View>
 
       <KeyboardAvoidingView
@@ -119,115 +189,265 @@ const AddPhoneScreen = ({ route, navigation }) => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.fieldLabel}>Name</Text>
+          <Text variant="titleMedium" style={styles.sectionLabel}>
+            Intake
+          </Text>
+
+          <View style={styles.fieldRow}>
+            <View style={styles.fieldCell}>
+              <TextInput
+                mode="outlined"
+                label="Brand"
+                placeholder="e.g. Vivo"
+                value={brand}
+                onChangeText={setBrand}
+                style={styles.input}
+              />
+            </View>
+            <View style={styles.fieldCell}>
+              <TextInput
+                mode="outlined"
+                label="Model"
+                placeholder="e.g. Y87"
+                value={model}
+                onChangeText={setModel}
+                style={styles.input}
+              />
+            </View>
+          </View>
+
           <TextInput
+            mode="outlined"
+            label="Physical condition"
+            placeholder="e.g. Cracked frame, dent on left side"
+            value={condition}
+            onChangeText={setCondition}
             style={styles.input}
-            placeholder="e.g. iPhone 13 · cracked display"
-            placeholderTextColor={theme.textMuted}
-            value={name}
-            onChangeText={setName}
           />
 
-          <Text style={styles.fieldLabel}>Issue</Text>
           <TextInput
-            style={styles.input}
+            mode="outlined"
+            label="Issue"
             placeholder="e.g. Cracked screen"
-            placeholderTextColor={theme.textMuted}
             value={issue}
             onChangeText={setIssue}
+            style={styles.input}
           />
 
-          <Text style={styles.fieldLabel}>Source</Text>
           <TextInput
-            style={styles.input}
+            mode="outlined"
+            label="Acquisition source"
             placeholder="e.g. Walk-in seller"
-            placeholderTextColor={theme.textMuted}
             value={source}
             onChangeText={setSource}
+            style={styles.input}
           />
 
-          <Text style={styles.fieldLabel}>Job type</Text>
-          <ChipRow options={JOB_TYPES} value={jobType} onChange={setJobType} />
-
-          <Text style={styles.fieldLabel}>Status</Text>
-          <ChipRow options={UNIT_STATUSES} value={status} onChange={setStatus} />
-
-          <View style={styles.moneyRow}>
-            <View style={styles.moneyField}>
-              <Text style={styles.fieldLabel}>Purchase ₱</Text>
+          <View style={styles.fieldRow}>
+            <View style={styles.fieldCell}>
               <TextInput
+                mode="outlined"
+                label="Date acquired"
+                placeholder="YYYY-MM-DD"
+                value={date}
+                onChangeText={setDate}
                 style={styles.input}
+              />
+            </View>
+            <View style={styles.fieldCell}>
+              <Text variant="bodySmall" style={styles.muted}>
+                Job type
+              </Text>
+              <ChipRow
+                options={JOB_TYPES}
+                value={jobType}
+                onChange={setJobType}
+              />
+            </View>
+          </View>
+
+          <TextInput
+            mode="outlined"
+            label="Intake notes"
+            placeholder="Anything noted at hand-over"
+            multiline
+            numberOfLines={3}
+            value={intakeNotes}
+            onChangeText={setIntakeNotes}
+            style={styles.textArea}
+          />
+
+          <Text variant="titleMedium" style={styles.sectionLabel}>
+            Money
+          </Text>
+
+          <View style={styles.fieldRow}>
+            <View style={styles.fieldCell}>
+              <TextInput
+                mode="outlined"
+                label="Purchase ₱"
                 placeholder="0"
-                placeholderTextColor={theme.textMuted}
                 keyboardType="numeric"
                 value={purchasePrice}
                 onChangeText={setPurchasePrice}
+                style={styles.input}
               />
             </View>
-            <View style={styles.moneyField}>
-              <Text style={styles.fieldLabel}>Revenue ₱</Text>
+            <View style={styles.fieldCell}>
               <TextInput
-                style={styles.input}
+                mode="outlined"
+                label="Revenue ₱"
                 placeholder="0"
-                placeholderTextColor={theme.textMuted}
                 keyboardType="numeric"
                 value={revenue}
                 onChangeText={setRevenue}
+                style={styles.input}
               />
             </View>
           </View>
 
-          <View style={styles.moneyRow}>
-            <View style={styles.moneyField}>
-              <Text style={styles.fieldLabel}>Parts ₱</Text>
+          <View style={styles.fieldRow}>
+            <View style={styles.fieldCell}>
               <TextInput
-                style={styles.input}
+                mode="outlined"
+                label="Parts ₱"
                 placeholder="0"
-                placeholderTextColor={theme.textMuted}
                 keyboardType="numeric"
                 value={partsCost}
                 onChangeText={setPartsCost}
+                style={styles.input}
               />
             </View>
-            <View style={styles.moneyField}>
-              <Text style={styles.fieldLabel}>Labor ₱</Text>
+            <View style={styles.fieldCell}>
               <TextInput
-                style={styles.input}
+                mode="outlined"
+                label="Labor ₱"
                 placeholder="0"
-                placeholderTextColor={theme.textMuted}
                 keyboardType="numeric"
                 value={laborCost}
                 onChangeText={setLaborCost}
+                style={styles.input}
               />
             </View>
           </View>
 
-          <Text style={styles.fieldLabel}>Other expenses ₱</Text>
           <TextInput
-            style={styles.input}
+            mode="outlined"
+            label="Other expenses ₱"
             placeholder="0"
-            placeholderTextColor={theme.textMuted}
             keyboardType="numeric"
             value={otherExpenses}
             onChangeText={setOtherExpenses}
+            style={styles.input}
           />
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <Text variant="titleMedium" style={styles.sectionLabel}>
+            Expenses
+          </Text>
 
-          <TouchableOpacity
+          {expenseItems.map((item, index) => (
+            <View key={`expense-${index}`} style={styles.expenseRow}>
+              <View style={styles.expenseName}>
+                <TextInput
+                  mode="outlined"
+                  label="Part name"
+                  value={item.name}
+                  onChangeText={(value) => updateExpense(index, 'name', value)}
+                  style={styles.input}
+                />
+              </View>
+              <View style={styles.expenseCost}>
+                <TextInput
+                  mode="outlined"
+                  label="₱ cost"
+                  placeholder="0"
+                  keyboardType="numeric"
+                  value={item.cost}
+                  onChangeText={(value) => updateExpense(index, 'cost', value)}
+                  style={styles.input}
+                />
+              </View>
+              <IconButton
+                icon="close"
+                size={18}
+                style={styles.expenseRemove}
+                onPress={() => removeExpense(index)}
+              />
+            </View>
+          ))}
+
+          <Button
+            mode="outlined"
+            icon="plus"
+            textColor={theme.primary}
+            style={styles.addExpenseButton}
+            contentStyle={styles.buttonContent}
+            onPress={addExpense}
+          >
+            Add expense
+          </Button>
+
+          <Surface style={styles.runningTotal} elevation={0}>
+            <Text variant="bodyMedium" style={styles.runningTotalLabel}>
+              Running investment
+            </Text>
+            <Text variant="titleMedium" style={styles.runningTotalValue}>
+              {formatPeso(runningInvestment)}
+            </Text>
+          </Surface>
+
+          <Text variant="titleMedium" style={styles.sectionLabel}>
+            Evaluation &amp; diagnosis
+          </Text>
+
+          <TextInput
+            mode="outlined"
+            label="Diagnosed problems"
+            placeholder="e.g. Dead LCD connector, corroded charging line"
+            multiline
+            numberOfLines={3}
+            value={diagnosis}
+            onChangeText={setDiagnosis}
+            style={styles.textArea}
+          />
+
+          <TextInput
+            mode="outlined"
+            label="Repair feasibility notes"
+            placeholder="e.g. Parts available, worth repairing"
+            multiline
+            numberOfLines={3}
+            value={feasibility}
+            onChangeText={setFeasibility}
+            style={styles.textArea}
+          />
+
+          <TextInput
+            mode="outlined"
+            label="Estimated repair cost ₱"
+            placeholder="0"
+            keyboardType="numeric"
+            value={estimatedRepairCost}
+            onChangeText={setEstimatedRepairCost}
+            style={styles.input}
+          />
+
+          {error ? (
+            <Text variant="bodyMedium" style={styles.error}>
+              {error}
+            </Text>
+          ) : null}
+
+          <Button
+            mode="contained"
+            icon="check"
+            contentStyle={styles.saveButtonContent}
+            labelStyle={styles.buttonLabel}
             style={styles.saveButton}
-            activeOpacity={0.85}
             onPress={handleSave}
           >
-            <MaterialCommunityIcons
-              name="check"
-              size={18}
-              color={theme.textOnPrimary}
-            />
-            <Text style={styles.saveButtonText}>
-              {editing ? 'Save changes' : 'Add to bench'}
-            </Text>
-          </TouchableOpacity>
+            {editing ? 'Save changes' : 'Add to bench'}
+          </Button>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -250,42 +470,40 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.medium,
     paddingBottom: theme.spacing.small,
   },
-  title: {
-    fontSize: theme.typography.h1.fontSize,
-    fontWeight: theme.typography.h1.fontWeight,
-    letterSpacing: theme.typography.h1.letterSpacing,
+  screenTitle: {
     color: theme.text,
+    fontWeight: '700',
   },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.roundness.pill,
-    backgroundColor: theme.surface,
-    borderWidth: 1,
-    borderColor: theme.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+  muted: {
+    color: theme.textMuted,
+    marginBottom: 4,
   },
   content: {
     paddingHorizontal: theme.spacing.medium,
     paddingBottom: theme.spacing.xl,
   },
-  fieldLabel: {
-    color: theme.textMuted,
-    fontSize: theme.typography.caption.fontSize,
-    fontWeight: '600',
-    marginBottom: 8,
-    marginTop: theme.spacing.medium,
+  sectionLabel: {
+    color: theme.text,
+    fontWeight: '700',
+    marginTop: theme.spacing.large,
+    marginBottom: theme.spacing.small,
   },
   input: {
     backgroundColor: theme.surface,
-    borderWidth: 1,
-    borderColor: theme.border,
     borderRadius: theme.roundness.medium,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: theme.typography.body1.fontSize,
-    color: theme.text,
+    marginBottom: theme.spacing.small,
+  },
+  textArea: {
+    backgroundColor: theme.surface,
+    borderRadius: theme.roundness.medium,
+    marginBottom: theme.spacing.small,
+  },
+  fieldRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.medium,
+  },
+  fieldCell: {
+    flex: 1,
   },
   chipRow: {
     flexDirection: 'row',
@@ -294,50 +512,68 @@ const styles = StyleSheet.create({
   },
   chip: {
     backgroundColor: theme.surface,
-    borderWidth: 1,
     borderColor: theme.border,
     borderRadius: theme.roundness.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
   },
   chipActive: {
-    backgroundColor: theme.primary,
+    backgroundColor: theme.primarySoft,
     borderColor: theme.primary,
   },
-  chipText: {
-    color: theme.text,
-    fontSize: theme.typography.caption.fontSize + 1,
-  },
-  chipTextActive: {
-    color: theme.textOnPrimary,
-    fontWeight: '700',
-  },
-  moneyRow: {
+  expenseRow: {
     flexDirection: 'row',
-    gap: theme.spacing.medium,
+    alignItems: 'center',
+    gap: theme.spacing.small,
   },
-  moneyField: {
+  expenseName: {
     flex: 1,
+  },
+  expenseCost: {
+    width: 104,
+  },
+  expenseRemove: {
+    margin: 0,
+  },
+  addExpenseButton: {
+    borderColor: theme.primary,
+    borderRadius: theme.roundness.medium,
+    marginTop: theme.spacing.small,
+  },
+  buttonContent: {
+    height: 44,
+  },
+  runningTotal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.primarySoft,
+    borderRadius: theme.roundness.medium,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: theme.spacing.small,
+  },
+  runningTotalLabel: {
+    color: theme.primary,
+    fontWeight: '600',
+  },
+  runningTotalValue: {
+    color: theme.primary,
+    fontWeight: '700',
   },
   error: {
     color: theme.error,
-    fontSize: theme.typography.body2.fontSize,
     marginTop: theme.spacing.medium,
   },
   saveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
     backgroundColor: theme.primary,
     borderRadius: theme.roundness.medium,
-    paddingVertical: 15,
     marginTop: theme.spacing.large,
   },
-  saveButtonText: {
-    color: theme.textOnPrimary,
-    fontSize: theme.typography.label.fontSize,
+  saveButtonContent: {
+    height: 50,
+  },
+  buttonLabel: {
     fontWeight: '700',
+    fontSize: theme.typography.label.fontSize,
   },
 });
 

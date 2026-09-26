@@ -4,13 +4,16 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  Avatar,
+  Button,
+  HelperText,
+  Text,
+  TextInput,
+} from 'react-native-paper';
 
 import { useAppContext } from '../../context/AppContext';
 import { theme } from '../../theme/theme';
@@ -25,7 +28,8 @@ const SignupScreen = ({ navigation }) => {
   // ---------------------------------------------------------------------
   // BACKEND: account creation
   // 1. Validate the passwords client-side (below).
-  // 2. POST { email, password } to your registration endpoint.
+  // 2. Create the account (Firebase Authentication:
+  //    createUserWithEmailAndPassword).
   // 3. Store the session token, then log the new user in via `login()`.
   // ---------------------------------------------------------------------
   const handleSignup = async () => {
@@ -34,18 +38,11 @@ const SignupScreen = ({ navigation }) => {
       return;
     }
 
-    // const response = await fetch('https://YOUR_API/auth/register', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ email, password }),
-    // });
-    // if (!response.ok) {
-    //   setError('Could not create the account');
-    //   return;
-    // }
-    // const { token, user } = await response.json();
-    // await AsyncStorage.setItem('token', token);
-    // login(user);
+    // const userCredential = await createUserWithEmailAndPassword(
+    //   auth, email, password
+    // );
+    // await AsyncStorage.setItem('token', userCredential.user.uid);
+    // login({ email: userCredential.user.email });
     // setError('');
     setError('Backend not connected yet');
   };
@@ -62,73 +59,72 @@ const SignupScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.brand}>
-            <View style={styles.logo}>
-              <MaterialCommunityIcons
-                name="cellphone-cog"
-                size={30}
-                color={theme.textOnPrimary}
-              />
-            </View>
-            <Text style={styles.title}>Create account</Text>
-            <Text style={styles.tagline}>
+            <Avatar.Icon size={64} icon="cellphone-cog" />
+            <Text variant="headlineSmall" style={styles.title}>
+              Create account
+            </Text>
+            <Text variant="bodyMedium" style={styles.tagline}>
               Start tracking capital, repairs, and profit in one place.
             </Text>
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.fieldLabel}>Email</Text>
             <TextInput
-              style={styles.input}
+              mode="outlined"
+              label="Email"
               placeholder="you@shop.com"
-              placeholderTextColor={theme.textMuted}
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
+              style={styles.input}
             />
 
-            <Text style={styles.fieldLabel}>Password</Text>
             <TextInput
-              style={styles.input}
+              mode="outlined"
+              label="Password"
               placeholder="••••••••"
-              placeholderTextColor={theme.textMuted}
               secureTextEntry
               value={password}
               onChangeText={setPassword}
+              style={styles.input}
             />
 
-            <Text style={styles.fieldLabel}>Confirm password</Text>
             <TextInput
-              style={styles.input}
+              mode="outlined"
+              label="Confirm password"
               placeholder="••••••••"
-              placeholderTextColor={theme.textMuted}
               secureTextEntry
               value={confirmPassword}
               onChangeText={setConfirmPassword}
+              style={styles.input}
             />
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            <HelperText type="error" visible={Boolean(error)}>
+              {error}
+            </HelperText>
 
-            <TouchableOpacity
+            <Button
+              mode="contained"
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.buttonLabel}
               style={styles.button}
-              activeOpacity={0.85}
               onPress={handleSignup}
             >
-              <Text style={styles.buttonText}>Create account</Text>
-            </TouchableOpacity>
+              Create account
+            </Button>
           </View>
 
           {navigation ? (
-            <TouchableOpacity
+            <Button
+              mode="text"
+              compact
+              textColor={theme.primary}
               style={styles.footer}
-              activeOpacity={0.7}
               onPress={() => navigation.navigate('Login')}
             >
-              <Text style={styles.footerText}>
-                Already have an account?{' '}
-                <Text style={styles.footerLink}>Sign in</Text>
-              </Text>
-            </TouchableOpacity>
+              Already have an account? Sign in
+            </Button>
           ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -154,80 +150,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.large,
   },
-  logo: {
-    width: 64,
-    height: 64,
-    borderRadius: theme.roundness.medium,
-    backgroundColor: theme.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.medium,
-  },
   title: {
-    fontSize: theme.typography.h1.fontSize,
-    fontWeight: theme.typography.h1.fontWeight,
-    letterSpacing: theme.typography.h1.letterSpacing,
     color: theme.text,
+    fontWeight: '700',
+    marginTop: theme.spacing.medium,
   },
   tagline: {
-    marginTop: 8,
-    fontSize: theme.typography.body2.fontSize,
     color: theme.textMuted,
     textAlign: 'center',
-    lineHeight: 20,
+    marginTop: 8,
   },
   form: {
     backgroundColor: theme.surface,
-    borderWidth: 1,
     borderColor: theme.border,
+    borderWidth: 1,
     borderRadius: theme.roundness.large,
     padding: theme.spacing.medium,
   },
-  fieldLabel: {
-    color: theme.textMuted,
-    fontSize: theme.typography.caption.fontSize,
-    fontWeight: '600',
-    marginBottom: 8,
-    marginTop: theme.spacing.small,
-  },
   input: {
-    backgroundColor: theme.background,
-    borderWidth: 1,
-    borderColor: theme.border,
+    backgroundColor: theme.surface,
     borderRadius: theme.roundness.medium,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    fontSize: theme.typography.body1.fontSize,
-    color: theme.text,
-  },
-  error: {
-    color: theme.error,
-    fontSize: theme.typography.body2.fontSize,
-    marginTop: theme.spacing.medium,
+    marginBottom: theme.spacing.small,
   },
   button: {
     backgroundColor: theme.primary,
     borderRadius: theme.roundness.medium,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: theme.spacing.large,
+    marginTop: theme.spacing.small,
   },
-  buttonText: {
-    color: theme.textOnPrimary,
-    fontSize: theme.typography.label.fontSize,
+  buttonContent: {
+    height: 50,
+  },
+  buttonLabel: {
     fontWeight: '700',
+    fontSize: theme.typography.label.fontSize,
   },
   footer: {
-    marginTop: theme.spacing.large,
-    alignItems: 'center',
-  },
-  footerText: {
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-  },
-  footerLink: {
-    color: theme.primary,
-    fontWeight: '700',
+    marginTop: theme.spacing.medium,
   },
 });
 

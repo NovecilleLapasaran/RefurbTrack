@@ -1,3 +1,5 @@
+import { MD3LightTheme } from 'react-native-paper';
+
 export const theme = {
   // Brand
   primary: '#0E5C3E', // Forest green (buttons, active tab, accents)
@@ -64,6 +66,39 @@ export const theme = {
     medium: 16,
     large: 22,
     pill: 999,
+  },
+};
+
+// React Native Paper (MD3) theme, aligned with the tokens above.
+export const paperTheme = {
+  ...MD3LightTheme,
+  roundness: 16,
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: '#0E5C3E',
+    onPrimary: '#FFFFFF',
+    primaryContainer: '#E4EFE8',
+    onPrimaryContainer: '#0B4A32',
+    secondary: '#0E5C3E',
+    background: '#F4F1E7',
+    onBackground: '#1E2320',
+    surface: '#FFFFFF',
+    onSurface: '#1E2320',
+    surfaceVariant: '#FBF9F1',
+    onSurfaceVariant: '#7C7F76',
+    outline: '#E7E2D3',
+    outlineVariant: '#E7E2D3',
+    error: '#B3261E',
+    inverseSurface: '#1E2320',
+    inverseOnSurface: '#F4F1E7',
+    elevation: {
+      level0: 'transparent',
+      level1: '#FFFFFF',
+      level2: '#FFFFFF',
+      level3: '#FBF9F1',
+      level4: '#FBF9F1',
+      level5: '#FBF9F1',
+    },
   },
 };
 

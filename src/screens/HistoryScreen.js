@@ -1,97 +1,92 @@
 import React from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Badge, Card, Surface, Text } from 'react-native-paper';
 
-import { formatPeso, referenceOf, useAppContext } from '../context/AppContext';
+import {
+  formatPeso,
+  investmentOf,
+  realizedOf,
+  referenceOf,
+  useAppContext,
+} from '../context/AppContext';
 import { theme } from '../theme/theme';
-
-const investmentOf = (phone) =>
-  Number(phone.purchasePrice || 0) +
-  Number(phone.partsCost || 0) +
-  Number(phone.laborCost || 0) +
-  Number(phone.otherExpenses || 0);
-
-const realizedOf = (phone) => {
-  const status = String(phone.status || '').toLowerCase();
-  if (status === 'written off') return -investmentOf(phone);
-  return (
-    Number(phone.revenue || phone.amountCharged || 0) - investmentOf(phone)
-  );
-};
 
 const HistoryScreen = () => {
   // BACKEND: swap for
-  //   GET https://YOUR_API/units?status=Sold,Released,Written off
+  //   GET https://YOUR_API/units?status=Sold,Released,Not Worth Repairing
   // and let the server compute realized profit per job if it owns pricing.
   const { closedJobs, stats } = useAppContext();
 
   const renderItem = ({ item }) => {
     const profit = realizedOf(item);
-    const writtenOff = item.status === 'Written off';
+    const writtenOff = item.status === 'Not Worth Repairing';
 
     return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardTitle}>{item.name || 'Untitled unit'}</Text>
-            <Text style={styles.cardMeta}>
-              {referenceOf(item)} · {item.date || item.closedAt || item.jobType || 'Closed job'}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.statusPill,
-              writtenOff ? styles.statusPillMuted : null,
-            ]}
-          >
-            <Text
-              style={[
-                styles.statusPillText,
-                writtenOff ? styles.statusPillTextMuted : null,
-              ]}
+      <Card mode="outlined" style={styles.card}>
+        <Card.Content>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardInfo}>
+              <Text variant="titleMedium" style={styles.cardTitle}>
+                {item.name || 'Untitled unit'}
+              </Text>
+              <Text variant="bodySmall" style={styles.muted}>
+                {referenceOf(item)} ·{' '}
+                {item.date || item.closedAt || item.jobType || 'Closed job'}
+              </Text>
+            </View>
+            <Badge
+              style={[styles.statusBadge, writtenOff && styles.badgeMuted]}
+              textColor={writtenOff ? theme.textMuted : theme.primary}
             >
               {item.status}
+            </Badge>
+          </View>
+
+          <View style={styles.cardFooter}>
+            <Text variant="bodySmall" style={styles.muted}>
+              Realized
+            </Text>
+            <Text
+              variant="titleMedium"
+              style={[
+                styles.profitValue,
+                profit < 0 ? styles.profitNegative : null,
+              ]}
+            >
+              {profit >= 0 ? '+' : ''}
+              {formatPeso(profit)}
             </Text>
           </View>
-        </View>
-
-        <View style={styles.cardFooter}>
-          <Text style={styles.footerLabel}>Realized</Text>
-          <Text
-            style={[
-              styles.footerValue,
-              profit < 0 ? styles.footerValueNegative : null,
-            ]}
-          >
-            {profit >= 0 ? '+' : ''}
-            {formatPeso(profit)}
-          </Text>
-        </View>
-      </View>
+        </Card.Content>
+      </Card>
     );
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>History</Text>
-        <Text style={styles.subtitle}>
+        <Text variant="headlineSmall" style={styles.screenTitle}>
+          History
+        </Text>
+        <Text variant="bodyMedium" style={styles.muted}>
           {closedJobs.length} closed jobs
         </Text>
       </View>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Realized profit</Text>
-        <Text style={styles.summaryValue}>
+      <Surface style={styles.summaryCard} elevation={0}>
+        <Text variant="bodyMedium" style={styles.heroLabel}>
+          Realized profit
+        </Text>
+        <Text style={styles.heroValue}>
           {stats.realizedProfit >= 0 ? '+' : ''}
           {formatPeso(stats.realizedProfit)}
         </Text>
-        <Text style={styles.summaryCaption}>
+        <Text variant="bodySmall" style={styles.heroCaption}>
           {stats.soldOrReleased} sold or released
           {stats.writtenOff > 0 ? ` · ${stats.writtenOff} written off` : ''}
         </Text>
-      </View>
+      </Surface>
 
       <FlatList
         data={closedJobs}
@@ -100,17 +95,14 @@ const HistoryScreen = () => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <View style={styles.emptyCard}>
-            <MaterialCommunityIcons
-              name="history"
-              size={28}
-              color={theme.textMuted}
-            />
-            <Text style={styles.emptyText}>
-              Nothing here yet. Jobs appear once a unit is sold, released, or
-              written off.
-            </Text>
-          </View>
+          <Card mode="contained" style={styles.emptyCard}>
+            <Card.Content style={styles.emptyContent}>
+              <Text variant="bodyMedium" style={styles.muted}>
+                Nothing here yet. Jobs appear once a unit is sold, released, or
+                marked not worth repairing.
+              </Text>
+            </Card.Content>
+          </Card>
         }
       />
     </SafeAreaView>
@@ -127,15 +119,11 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.medium,
     paddingBottom: theme.spacing.medium,
   },
-  title: {
-    fontSize: theme.typography.h1.fontSize,
-    fontWeight: theme.typography.h1.fontWeight,
-    letterSpacing: theme.typography.h1.letterSpacing,
+  screenTitle: {
     color: theme.text,
+    fontWeight: '700',
   },
-  subtitle: {
-    marginTop: 4,
-    fontSize: theme.typography.body2.fontSize,
+  muted: {
     color: theme.textMuted,
   },
   summaryCard: {
@@ -145,21 +133,19 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: theme.spacing.medium,
   },
-  summaryLabel: {
+  heroLabel: {
     color: 'rgba(255,255,255,0.78)',
-    fontSize: theme.typography.body2.fontSize,
     marginBottom: 6,
   },
-  summaryValue: {
+  heroValue: {
     color: theme.textOnPrimary,
     fontSize: 34,
     fontWeight: '700',
     letterSpacing: -1,
   },
-  summaryCaption: {
+  heroCaption: {
     marginTop: 8,
     color: 'rgba(255,255,255,0.72)',
-    fontSize: theme.typography.caption.fontSize,
   },
   listContent: {
     paddingHorizontal: theme.spacing.medium,
@@ -168,46 +154,27 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: theme.surface,
-    borderRadius: theme.roundness.large,
-    borderWidth: 1,
     borderColor: theme.border,
-    padding: 16,
+    borderRadius: theme.roundness.large,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: theme.spacing.small,
   },
   cardInfo: {
     flex: 1,
-    paddingRight: theme.spacing.small,
   },
   cardTitle: {
     color: theme.text,
-    fontSize: theme.typography.body1.fontSize + 1,
     fontWeight: '700',
   },
-  cardMeta: {
-    marginTop: 2,
-    color: theme.textMuted,
-    fontSize: theme.typography.caption.fontSize,
-  },
-  statusPill: {
+  statusBadge: {
     backgroundColor: theme.primarySoft,
-    borderRadius: theme.roundness.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
   },
-  statusPillText: {
-    color: theme.primary,
-    fontSize: theme.typography.caption.fontSize,
-    fontWeight: '700',
-  },
-  statusPillMuted: {
-    backgroundColor: '#F1EEE4',
-  },
-  statusPillTextMuted: {
-    color: theme.textMuted,
+  badgeMuted: {
+    backgroundColor: '#EFECE1',
   },
   cardFooter: {
     flexDirection: 'row',
@@ -218,32 +185,22 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.border,
   },
-  footerLabel: {
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-  },
-  footerValue: {
+  profitValue: {
     color: theme.primary,
-    fontSize: theme.typography.label.fontSize,
     fontWeight: '700',
   },
-  footerValueNegative: {
+  profitNegative: {
     color: theme.error,
   },
   emptyCard: {
-    alignItems: 'center',
     backgroundColor: theme.surface,
-    borderRadius: theme.roundness.large,
-    borderWidth: 1,
     borderColor: theme.border,
-    padding: 28,
-    gap: 10,
+    borderRadius: theme.roundness.large,
+    marginTop: theme.spacing.small,
   },
-  emptyText: {
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-    textAlign: 'center',
-    lineHeight: 20,
+  emptyContent: {
+    alignItems: 'center',
+    paddingVertical: 28,
   },
 });
 

@@ -1,17 +1,13 @@
 import React from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Badge, Button, Card, Chip, Surface, Text } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 
 import {
   formatPeso,
+  investmentOf,
+  realizedOf,
   referenceOf,
   shortReference,
   UNIT_STATUSES,
@@ -19,32 +15,30 @@ import {
 } from '../context/AppContext';
 import { theme } from '../theme/theme';
 
-const investmentOf = (phone) =>
-  Number(phone.purchasePrice || 0) +
-  Number(phone.partsCost || 0) +
-  Number(phone.laborCost || 0) +
-  Number(phone.otherExpenses || 0);
-
-const realizedOf = (phone) => {
-  const status = String(phone.status || '').toLowerCase();
-  if (status === 'written off') return -investmentOf(phone);
-  return Number(phone.revenue || phone.amountCharged || 0) - investmentOf(phone);
-};
-
 const StatCard = ({ label, value, caption }) => (
-  <View style={styles.statCard}>
-    <Text style={styles.statLabel}>{label}</Text>
-    <Text style={styles.statValue}>{value}</Text>
-    {caption ? <Text style={styles.statCaption}>{caption}</Text> : null}
-  </View>
+  <Card mode="outlined" style={styles.statCard}>
+    <Card.Content>
+      <Text variant="bodyMedium" style={styles.muted}>
+        {label}
+      </Text>
+      <Text variant="headlineSmall" style={styles.statValue}>
+        {value}
+      </Text>
+      {caption ? (
+        <Text variant="bodySmall" style={styles.muted}>
+          {caption}
+        </Text>
+      ) : null}
+    </Card.Content>
+  </Card>
 );
 
 const ClosedJobsChart = ({ jobs }) => {
   if (!jobs.length) {
     return (
-      <Text style={styles.chartEmpty}>
-        Closed jobs will chart here once units are sold, released, or written
-        off.
+      <Text variant="bodyMedium" style={styles.muted}>
+        Closed jobs will chart here once units are sold, released, or marked
+        not worth repairing.
       </Text>
     );
   }
@@ -55,7 +49,7 @@ const ClosedJobsChart = ({ jobs }) => {
   return (
     <ScrollView
       horizontal
-      showsHorizontalScrollIndicator={false}
+      showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.chartRow}
     >
       {jobs.map((job, index) => {
@@ -76,7 +70,9 @@ const ClosedJobsChart = ({ jobs }) => {
                 ]}
               />
             </View>
-            <Text style={styles.chartLabel}>{shortReference(job)}</Text>
+            <Text variant="bodySmall" style={styles.muted}>
+              {shortReference(job)}
+            </Text>
           </View>
         );
       })}
@@ -101,8 +97,6 @@ const DashboardScreen = () => {
     .filter(Boolean)
     .join(' · ');
 
-  // BACKEND: `stats` is derived locally in AppContext. If your API reports
-  // aggregates, swap it for `GET /api/dashboard` here instead.
   const activeStatuses = UNIT_STATUSES.filter(
     (status) => stats.statusCounts[status] > 0
   );
@@ -115,27 +109,37 @@ const DashboardScreen = () => {
       >
         <View style={styles.header}>
           <View style={styles.headerText}>
-            <Text style={styles.title}>Bench</Text>
-            <Text style={styles.subtitle}>{subtitle}</Text>
+            <Text variant="headlineSmall" style={styles.screenTitle}>
+              Bench
+            </Text>
+            <Text variant="bodyMedium" style={styles.muted}>
+              {subtitle}
+            </Text>
           </View>
-          <TouchableOpacity
-            style={styles.newButton}
-            activeOpacity={0.85}
+          <Button
+            mode="contained"
+            icon="plus"
+            compact
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
             onPress={() => navigation.navigate('AddPhone')}
           >
-            <MaterialCommunityIcons name="plus" size={18} color={theme.textOnPrimary} />
-            <Text style={styles.newButtonText}>New</Text>
-          </TouchableOpacity>
+            New
+          </Button>
         </View>
 
-        <View style={styles.heroCard}>
-          <Text style={styles.heroLabel}>Realized profit</Text>
+        <Surface style={styles.heroCard} elevation={0}>
+          <Text variant="bodyMedium" style={styles.heroLabel}>
+            Realized profit
+          </Text>
           <Text style={styles.heroValue}>
             {stats.realizedProfit >= 0 ? '+' : ''}
             {formatPeso(stats.realizedProfit)}
           </Text>
-          <Text style={styles.heroCaption}>{closedLine || 'No units closed yet'}</Text>
-        </View>
+          <Text variant="bodySmall" style={styles.heroCaption}>
+            {closedLine || 'No units closed yet'}
+          </Text>
+        </Surface>
 
         <View style={styles.statRow}>
           <StatCard label="Tied-up capital" value={formatPeso(stats.tiedUpCapital)} />
@@ -147,102 +151,131 @@ const DashboardScreen = () => {
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Status mix</Text>
-          <TouchableOpacity
-            style={styles.sectionLink}
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Status mix
+          </Text>
+          <Button
+            mode="text"
+            compact
+            icon="arrow-right"
+            contentStyle={styles.inlineButtonContent}
             onPress={() => navigation.navigate('Units')}
-            activeOpacity={0.7}
           >
-            <Text style={styles.sectionLinkText}>All units</Text>
-            <MaterialCommunityIcons name="arrow-right" size={16} color={theme.primary} />
-          </TouchableOpacity>
+            All units
+          </Button>
         </View>
 
         {activeStatuses.length > 0 ? (
           <View style={styles.chipWrap}>
             {activeStatuses.map((status) => (
-              <View key={status} style={styles.chip}>
-                <Text style={styles.chipLabel}>{status}</Text>
-                <Text style={styles.chipCount}>{stats.statusCounts[status]}</Text>
-              </View>
+              <Chip
+                key={status}
+                mode="outlined"
+                style={styles.chip}
+                onPress={() => navigation.navigate('Units')}
+              >
+                {`${status} `}
+                <Text variant="labelLarge" style={styles.chipCount}>
+                  {stats.statusCounts[status]}
+                </Text>
+              </Chip>
             ))}
           </View>
         ) : (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>
-              No units on the bench yet. Tap “New” to add your first unit.
-            </Text>
-          </View>
+          <Card mode="contained" style={styles.emptyCard}>
+            <Card.Content>
+              <Text variant="bodyMedium" style={styles.muted}>
+                No units on the bench yet. Tap “New” to add your first unit.
+              </Text>
+            </Card.Content>
+          </Card>
         )}
 
-        <View style={styles.chartCard}>
-          <Text style={styles.sectionTitle}>Recent closed jobs</Text>
-          <Text style={styles.cardSubtitle}>
-            Profit and loss on the last sales
-          </Text>
-          <ClosedJobsChart jobs={closedJobs.slice(-6)} />
-        </View>
+        <Card mode="outlined" style={styles.chartCard}>
+          <Card.Content>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Recent closed jobs
+            </Text>
+            <Text variant="bodyMedium" style={styles.muted}>
+              Profit and loss on the last sales
+            </Text>
+            <ClosedJobsChart jobs={closedJobs.slice(-6)} />
+          </Card.Content>
+        </Card>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Active tickets</Text>
-          <TouchableOpacity
-            activeOpacity={0.7}
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Active tickets
+          </Text>
+          <Button
+            mode="text"
+            compact
+            contentStyle={styles.inlineButtonContent}
             onPress={() => navigation.navigate('Units')}
           >
-            <Text style={styles.openCount}>{stats.onBench} open</Text>
-          </TouchableOpacity>
+            {stats.onBench} open
+          </Button>
         </View>
 
         {openTickets.length > 0 ? (
           <View style={styles.ticketList}>
             {openTickets.map((phone) => (
-              <TouchableOpacity
+              <Card
                 key={referenceOf(phone)}
+                mode="outlined"
                 style={styles.ticketCard}
-                activeOpacity={0.8}
                 onPress={() => navigation.navigate('Units')}
               >
-                <View style={styles.ticketTop}>
-                  <Text style={styles.ticketRef}>
-                    {referenceOf(phone)} · {phone.jobType || 'Repair job'}
-                  </Text>
-                  <View style={styles.statusPill}>
-                    <Text style={styles.statusPillText}>
+                <Card.Content>
+                  <View style={styles.ticketTop}>
+                    <Text
+                      variant="bodyMedium"
+                      style={[styles.muted, styles.ticketRef]}
+                    >
+                      {referenceOf(phone)} · {phone.jobType || 'Repair job'}
+                    </Text>
+                    <Badge style={styles.statusBadge}>
                       {phone.status || 'Acquired'}
-                    </Text>
+                    </Badge>
                   </View>
-                </View>
 
-                <Text style={styles.ticketName}>
-                  {phone.name || 'Untitled unit'}
-                </Text>
-                <Text style={styles.ticketIssue}>
-                  {phone.issue || 'No issue noted'}
-                </Text>
+                  <Text variant="headlineSmall" style={styles.ticketName}>
+                    {phone.name || 'Untitled unit'}
+                  </Text>
+                  <Text variant="bodyMedium" style={styles.muted}>
+                    {phone.issue || 'No issue noted'}
+                  </Text>
 
-                <View style={styles.ticketBottom}>
-                  <View style={styles.ticketField}>
-                    <Text style={styles.ticketFieldLabel}>Investment</Text>
-                    <Text style={styles.ticketFieldValue}>
-                      {formatPeso(investmentOf(phone))}
-                    </Text>
+                  <View style={styles.ticketBottom}>
+                    <View>
+                      <Text variant="bodySmall" style={styles.muted}>
+                        Investment
+                      </Text>
+                      <Text variant="titleMedium" style={styles.ticketValue}>
+                        {formatPeso(investmentOf(phone))}
+                      </Text>
+                    </View>
+                    <View style={styles.ticketFieldRight}>
+                      <Text variant="bodySmall" style={styles.muted}>
+                        Source
+                      </Text>
+                      <Text variant="titleMedium" style={styles.ticketValue}>
+                        {phone.source || '—'}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={[styles.ticketField, styles.ticketFieldRight]}>
-                    <Text style={styles.ticketFieldLabel}>Source</Text>
-                    <Text style={styles.ticketFieldValue}>
-                      {phone.source || '—'}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
+                </Card.Content>
+              </Card>
             ))}
           </View>
         ) : (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>
-              No open tickets. Add a unit to start tracking it here.
-            </Text>
-          </View>
+          <Card mode="contained" style={styles.emptyCard}>
+            <Card.Content>
+              <Text variant="bodyMedium" style={styles.muted}>
+                No open tickets. Add a unit to start tracking it here.
+              </Text>
+            </Card.Content>
+          </Card>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -269,30 +302,22 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: theme.spacing.medium,
   },
-  title: {
-    fontSize: theme.typography.h1.fontSize,
-    fontWeight: theme.typography.h1.fontWeight,
-    letterSpacing: theme.typography.h1.letterSpacing,
+  screenTitle: {
     color: theme.text,
+    fontWeight: '700',
   },
-  subtitle: {
-    marginTop: 4,
-    fontSize: theme.typography.body2.fontSize,
+  muted: {
     color: theme.textMuted,
   },
-  newButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.primary,
-    borderRadius: theme.roundness.medium,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+  buttonContent: {
+    height: 44,
   },
-  newButtonText: {
-    color: theme.textOnPrimary,
-    fontSize: theme.typography.label.fontSize,
+  buttonLabel: {
     fontWeight: '700',
-    marginLeft: 6,
+    fontSize: theme.typography.label.fontSize,
+  },
+  inlineButtonContent: {
+    flexDirection: 'row-reverse',
   },
   heroCard: {
     backgroundColor: theme.primaryDark,
@@ -302,7 +327,6 @@ const styles = StyleSheet.create({
   },
   heroLabel: {
     color: 'rgba(255,255,255,0.78)',
-    fontSize: theme.typography.body1.fontSize,
     marginBottom: 6,
   },
   heroValue: {
@@ -314,7 +338,6 @@ const styles = StyleSheet.create({
   heroCaption: {
     marginTop: 10,
     color: 'rgba(255,255,255,0.72)',
-    fontSize: theme.typography.body2.fontSize,
   },
   statRow: {
     flexDirection: 'row',
@@ -324,60 +347,24 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: theme.surface,
-    borderRadius: theme.roundness.large,
-    borderWidth: 1,
     borderColor: theme.border,
-    padding: 18,
-  },
-  statLabel: {
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-    marginBottom: 8,
+    borderRadius: theme.roundness.large,
   },
   statValue: {
     color: theme.text,
-    fontSize: 28,
     fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-  statCaption: {
-    marginTop: 6,
-    color: theme.textMuted,
-    fontSize: theme.typography.caption.fontSize,
+    marginVertical: 6,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: theme.spacing.small,
-    marginBottom: theme.spacing.medium,
+    marginBottom: theme.spacing.small,
   },
   sectionTitle: {
     color: theme.text,
-    fontSize: theme.typography.h2.fontSize,
-    fontWeight: theme.typography.h2.fontWeight,
-    letterSpacing: theme.typography.h2.letterSpacing,
-  },
-  cardSubtitle: {
-    marginTop: 4,
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-    marginBottom: theme.spacing.medium,
-  },
-  sectionLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  sectionLinkText: {
-    color: theme.primary,
-    fontSize: theme.typography.body2.fontSize,
-    fontWeight: '600',
-  },
-  openCount: {
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   chipWrap: {
     flexDirection: 'row',
@@ -386,31 +373,18 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.medium,
   },
   chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: theme.surface,
-    borderWidth: 1,
     borderColor: theme.border,
     borderRadius: theme.roundness.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  chipLabel: {
-    color: theme.text,
-    fontSize: theme.typography.caption.fontSize + 1,
   },
   chipCount: {
     color: theme.text,
-    fontSize: theme.typography.caption.fontSize + 1,
     fontWeight: '700',
   },
   chartCard: {
     backgroundColor: theme.surface,
-    borderRadius: theme.roundness.large,
-    borderWidth: 1,
     borderColor: theme.border,
-    padding: 20,
+    borderRadius: theme.roundness.large,
     marginBottom: theme.spacing.large,
   },
   chartRow: {
@@ -435,26 +409,13 @@ const styles = StyleSheet.create({
   chartBarNegative: {
     backgroundColor: theme.error,
   },
-  chartLabel: {
-    marginTop: 10,
-    color: theme.textMuted,
-    fontSize: theme.typography.caption.fontSize,
-  },
-  chartEmpty: {
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-    lineHeight: 20,
-    paddingVertical: theme.spacing.medium,
-  },
   ticketList: {
     gap: theme.spacing.medium,
   },
   ticketCard: {
     backgroundColor: theme.surfaceAlt,
-    borderRadius: theme.roundness.large,
-    borderWidth: 1,
     borderColor: theme.border,
-    padding: 18,
+    borderRadius: theme.roundness.large,
   },
   ticketTop: {
     flexDirection: 'row',
@@ -464,70 +425,42 @@ const styles = StyleSheet.create({
   },
   ticketRef: {
     flex: 1,
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
     fontWeight: '600',
   },
-  statusPill: {
+  statusBadge: {
     backgroundColor: '#EFECE1',
-    borderRadius: theme.roundness.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  statusPillText: {
     color: theme.text,
-    fontSize: theme.typography.caption.fontSize,
     fontWeight: '700',
+    fontSize: theme.typography.caption.fontSize,
   },
   ticketName: {
-    marginTop: 12,
     color: theme.text,
-    fontSize: 22,
     fontWeight: '700',
+    marginTop: 10,
     letterSpacing: -0.4,
-  },
-  ticketIssue: {
-    marginTop: 6,
-    color: theme.textMuted,
-    fontSize: theme.typography.body1.fontSize,
   },
   ticketBottom: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    marginTop: 18,
+    marginTop: 16,
     paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: theme.border,
   },
-  ticketField: {
-    flex: 1,
-  },
   ticketFieldRight: {
     alignItems: 'flex-end',
   },
-  ticketFieldLabel: {
-    color: theme.textMuted,
-    fontSize: theme.typography.caption.fontSize,
-    marginBottom: 4,
-  },
-  ticketFieldValue: {
+  ticketValue: {
     color: theme.text,
-    fontSize: theme.typography.body1.fontSize + 2,
     fontWeight: '700',
+    marginTop: 2,
   },
   emptyCard: {
     backgroundColor: theme.surface,
-    borderRadius: theme.roundness.large,
-    borderWidth: 1,
     borderColor: theme.border,
-    padding: 20,
+    borderRadius: theme.roundness.large,
     marginBottom: theme.spacing.medium,
-  },
-  emptyText: {
-    color: theme.textMuted,
-    fontSize: theme.typography.body2.fontSize,
-    lineHeight: 20,
   },
 });
 

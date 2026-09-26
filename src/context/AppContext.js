@@ -3,31 +3,43 @@ import React, { createContext, useMemo, useState } from 'react';
 const AppContext = createContext();
 
 export const UNIT_STATUSES = [
-  'Repairing',
   'Acquired',
   'Evaluated',
-  'Ready for sale',
+  'Waiting for Parts',
+  'Repairing',
+  'Ready for Sale',
   'Ready for pickup',
   'Unsold',
 ];
 
-export const CLOSED_STATUSES = ['Sold', 'Released', 'Written off'];
+export const CLOSED_STATUSES = ['Sold', 'Released', 'Not Worth Repairing'];
 
 const num = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const investmentOf = (phone) =>
+const expenseItemsTotal = (phone) =>
+  (Array.isArray(phone.expenseItems) ? phone.expenseItems : []).reduce(
+    (acc, item) => acc + num(item.cost),
+    0
+  );
+
+// Running investment for a unit: purchase + parts + labor + other +
+// every per-part expense entry.
+export const investmentOf = (phone) =>
   num(phone.purchasePrice) +
   num(phone.partsCost) +
   num(phone.laborCost) +
-  num(phone.otherExpenses);
+  num(phone.otherExpenses) +
+  expenseItemsTotal(phone);
 
 // Profit realized by a record once it has left the bench.
-const realizedOf = (phone) => {
+export const realizedOf = (phone) => {
   const status = String(phone.status || '').toLowerCase();
-  if (status === 'written off') return -investmentOf(phone);
+  if (status === 'not worth repairing' || status === 'written off') {
+    return -investmentOf(phone);
+  }
   if (status === 'sold' || status === 'released') {
     const revenue = num(phone.revenue) || num(phone.amountCharged);
     return revenue - investmentOf(phone);
@@ -95,8 +107,8 @@ export const AppProvider = ({ children }) => {
     //   setPhoneRecords((prev) => [...prev, await res.json()]);
     const record = {
       id: phone.id || `${Date.now()}-${phoneRecords.length}`,
-      status: 'Acquired',
       ...phone,
+      status: phone.status || 'Acquired',
       reference: phone.reference || nextReference(phoneRecords),
     };
     setPhoneRecords([...phoneRecords, record]);
@@ -162,7 +174,7 @@ export const AppProvider = ({ children }) => {
       const isClosed = CLOSED_STATUSES.includes(status);
       if (isClosed) {
         realizedProfit += realizedOf(phone);
-        if (status === 'Written off') writtenOff += 1;
+        if (status === 'Not Worth Repairing') writtenOff += 1;
         else soldOrReleased += 1;
         return;
       }
