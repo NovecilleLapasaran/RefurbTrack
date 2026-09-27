@@ -3,7 +3,7 @@
     "name": "RefurbTrack",
     "slug": "RefurbTrack",
     "owner": "wrnzn",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "default",
     "icon": "./assets/refurbtrack-logo.png",
     "userInterfaceStyle": "automatic",
@@ -17,7 +17,7 @@
         "foregroundImage": "./assets/refurbtrack-logo.png",
         "backgroundColor": "#F3F8F5"
       },
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/refurbtrack-logo.png"

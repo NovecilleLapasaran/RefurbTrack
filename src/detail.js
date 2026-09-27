@@ -17,7 +17,7 @@ export function PhoneDetail({ navigation, route }) {
   const [more, setMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const run = async fn => { if (busy) return; setBusy(true); setError(''); try { await fn(); } catch(e) { setError(e.message); } finally { setBusy(false); } };
+  const run = async fn => { if (busy) return; setBusy(true); setError(''); try { await fn(); } catch(e) { setError(e); } finally { setBusy(false); } };
   if (!record) return <Page title="Phone record">{store.loading ? <Loading /> : <><Text style={styles.body}>This record is unavailable. It may have been deleted or access may have changed.</Text><Button title="Return to records" onPress={() => navigation.popToTop()} /></>}</Page>;
   const t = totals(record);
   const done = closed(record);

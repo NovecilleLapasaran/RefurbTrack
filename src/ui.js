@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { Check, ChevronDown, ChevronRight, Eye, EyeOff, Hourglass, X } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronRight, Copy, Eye, EyeOff, Hourglass, Share2, X } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, ReduceMotion, useReducedMotion } from 'react-native-reanimated';
 import { useStore } from './store';
@@ -10,6 +11,8 @@ import { useTheme } from './theme';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Sheet } from '../components/ui/sheet';
+import { diagnosticReport, friendlyError } from './error-report.mjs';
+import appConfig from '../app.json';
 export { Button, Sheet };
 export function IconButton({ icon: Icon, label, onPress, danger, disabled }) {
   const { C, styles } = useTheme();
@@ -64,7 +67,47 @@ export function Page({ children, title, subtitle, top = false, accessory, footer
     </KeyboardAvoidingView>
   </SafeAreaView>;
 }
-export function ErrorText({ message }) { const { styles } = useTheme(); return message ? <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>{message}</Text> : null; }
+export function ErrorText({ message }) {
+  const { styles } = useTheme();
+  if (!message) return null;
+  return typeof message === 'string'
+    ? <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>{message}</Text>
+    : <ErrorDetails error={message} />;
+}
+function ErrorDetails({ error }) {
+  const { C, styles } = useTheme();
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const report = useMemo(() => diagnosticReport(error, {
+    App: `${appConfig.expo.version} (Android build ${appConfig.expo.android.versionCode})`,
+    Platform: Platform.OS,
+    OS: Platform.OS === 'web' ? 'Browser' : Platform.constants?.Release || Platform.Version,
+    'Android API': Platform.OS === 'android' ? Platform.Version : 'Not applicable',
+    Manufacturer: Platform.constants?.Manufacturer,
+    Model: Platform.constants?.Model,
+  }), [error]);
+  const send = async copy => {
+    if (busy) return;
+    setBusy(true); setFeedback(null);
+    try {
+      if (copy) {
+        if (!await Clipboard.setStringAsync(report)) throw new Error('Clipboard unavailable');
+        setFeedback({ error, text: 'Details copied. Paste them into a message to your developer.' });
+      } else await Share.share({ title: 'RefurbTrack error report', message: report });
+    } catch {
+      setFeedback({ error, text: copy ? 'Could not copy. Select the details below to copy them manually.' : 'Could not open sharing. Copy the details and send them in a message instead.' });
+    } finally { setBusy(false); }
+  };
+  return <View style={[styles.panel, { backgroundColor: C.dangerSoft }]}>
+    <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>{friendlyError(error)}</Text>
+    <Disclosure title="Technical details">
+      <Text style={styles.small}>Includes app, phone, system and error details. Review before sending to your developer.</Text>
+      <View style={styles.row}><Button secondary title="Copy details" icon={Copy} disabled={busy} onPress={() => send(true)} /><Button secondary title="Share" icon={Share2} disabled={busy} onPress={() => send(false)} /></View>
+      {feedback?.error === error && <Text accessibilityLiveRegion="polite" style={styles.small}>{feedback.text}</Text>}
+      <Text selectable style={styles.small}>{report}</Text>
+    </Disclosure>
+  </View>;
+}
 export function Loading({ message = 'Loading your phone records…' }) {
   const { C, styles } = useTheme();
   const reducedMotion = useReducedMotion();

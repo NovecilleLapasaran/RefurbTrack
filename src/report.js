@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import { Asset } from 'expo-asset';
 import { Directory, File, Paths } from 'expo-file-system';
+import { readAsStringAsync, EncodingType } from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { reportFilename, reportHtml } from './report-document.mjs';
@@ -9,7 +10,12 @@ async function reportAsset(source, mime) {
   const asset = Asset.fromModule(source);
   if (Platform.OS === 'web') return new URL(asset.uri, window.location.href).href;
   await asset.downloadAsync();
-  return `data:${mime};base64,${await new File(asset.localUri).base64()}`;
+  const uri = asset.localUri || asset.uri;
+  // Android release assets may be resource names; the legacy reader resolves these.
+  const bytes = Platform.OS === 'android'
+    ? await readAsStringAsync(uri, { encoding: EncodingType.Base64 })
+    : await new File(uri).base64();
+  return `data:${mime};base64,${bytes}`;
 }
 
 export async function shareReport(records, shopName) {
@@ -43,6 +49,6 @@ export async function shareReport(records, shopName) {
     else await Print.printAsync({ uri: report.uri });
   } catch (error) {
     preview?.close();
-    throw error;
+    throw Object.assign(new Error('Could not save your shop report. Please try again. If it keeps happening, share the technical details with your developer.'), { cause: error, operation: 'Save shop report' });
   }
 }

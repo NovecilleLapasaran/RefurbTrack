@@ -12,20 +12,6 @@ const Store = createContext(null);
 const PRACTICE_KEY = 'refurbtrack.practice.v1';
 export const useStore = () => useContext(Store);
 export const newId = () => randomUUID();
-export function friendlyError(error) {
-  const messages = {
-    'auth/invalid-credential': 'Email or password is incorrect.',
-    'auth/email-already-in-use': 'An account already uses this email. Sign in instead.',
-    'auth/invalid-email': 'Enter a valid email address.',
-    'auth/weak-password': 'Use at least 8 characters for your password.',
-    'auth/network-request-failed': 'Cannot reach the sign-in service. Check your internet connection.',
-    'auth/too-many-requests': 'Too many attempts. Wait a few minutes and try again.',
-    'auth/operation-not-allowed': 'Sign-in is unavailable. Please contact your shop owner.',
-    'permission-denied': 'You do not have access to these records. Ask your shop owner to check your account.',
-    'unavailable': 'Cannot reach the database. Check your connection and retry.',
-  };
-  return (messages[error?.code] || error?.message || 'Something went wrong. Please try again.').replaceAll('YYYY-MM-DD', 'MM-DD-YYYY');
-}
 
 export function StoreProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -57,7 +43,7 @@ export function StoreProvider({ children }) {
         setShopName(assignment?.shopName || 'My shop');
       } catch (e) {
         if (auth.currentUser?.uid !== value.uid) return;
-        setShopId(''); setSetupError('Could not open your shop. Check your connection, then sign out and sign in again.');
+        setShopId(''); setSetupError(Object.assign(new Error('Could not open your shop. Check your connection, then sign out and sign in again.'), { cause: e, operation: 'Open shop' }));
       }
       setUser(value); setAuthLoading(false);
     });
@@ -69,7 +55,7 @@ export function StoreProvider({ children }) {
       setLoading(true);
       AsyncStorage.getItem(PRACTICE_KEY).then(raw => {
         if (alive) replace(raw ? JSON.parse(raw) : []);
-      }).catch(e => { if (alive) setError(friendlyError(e)); }).finally(() => { if (alive) setLoading(false); });
+      }).catch(e => { if (alive) setError(e); }).finally(() => { if (alive) setLoading(false); });
       return () => { alive = false; };
     }
     if (!user || !shopId) { setLoading(false); return; }
@@ -77,7 +63,7 @@ export function StoreProvider({ children }) {
     const unsubscribe = onSnapshot(collection(db, 'shops', shopId, 'records'), { includeMetadataChanges: true }, snapshot => {
       replace(snapshot.docs.map(d => ({ ...d.data(), id: d.id })));
       setFromCache(snapshot.metadata.fromCache); setError(''); setLoading(false);
-    }, e => { replace([]); setError(friendlyError(e)); setLoading(false); });
+    }, e => { replace([]); setError(e); setLoading(false); });
     return unsubscribe;
   }, [user?.uid, shopId, practice, reload]);
 

@@ -55,7 +55,7 @@ Keep the last working APK and Git commit. If a new APK fails, restore the earlie
 
 Firebase `refurbtrack-c4ed3` is configured: Email/Password Authentication is enabled, Firestore is in Singapore (`asia-southeast1`) on the standard free tier, and the repository rules are deployed. Expo `@wrnzn/RefurbTrack` is linked and its preview environment contains the six Firebase public client values.
 
-The previous 1.0.0 preview APK build finished successfully. [Download APK](https://expo.dev/artifacts/eas/AFSWm4dG2o5aDhuHZv7V9IiKrdvmiDJ6XZZ0Nx4hsrw.apk) or use the local file `releases/RefurbTrack-1.0.0-preview.apk`. Version 1.1.0 still needs a new APK build and physical-device checks.
+The previous 1.0.0 preview APK build finished successfully. [Download APK](https://expo.dev/artifacts/eas/AFSWm4dG2o5aDhuHZv7V9IiKrdvmiDJ6XZZ0Nx4hsrw.apk) or use the local file `releases/RefurbTrack-1.0.0-preview.apk`. Version 1.1.1 (Android build 4) needs a new APK build and physical-device checks. Rebuild the APK to include the new native clipboard module; refreshing the old installation does not install it.
 
 The instructions below remain available for another developer to reproduce setup or prepare a later build.
 

@@ -6,7 +6,7 @@ import { confirmAction } from '../components/ui/dialog';
 import { DateField } from './date-field';
 import { PhoneDetail } from './detail';
 import { auth, cloudConfigured } from './firebase';
-import { friendlyError, newId, useStore } from './store';
+import { newId, useStore } from './store';
 import { amountText, changeStatus, closed, completed, expensePatch, filterRecords, intake, JOBS, money, parseMoney, readyStatus, salePatch, STATUSES, summary, today, totals, validDate } from './domain.mjs';
 import { Button, Choice, Disclosure, ErrorText, Field, Line, Loading, Page, Section } from './ui';
 import { useTheme } from './theme';
@@ -14,7 +14,7 @@ import { useTheme } from './theme';
 function useAction() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const run = async fn => { if (busy) return; setBusy(true); setError(''); try { await fn(); } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); } };
+  const run = async fn => { if (busy) return; setBusy(true); setError(''); try { await fn(); } catch (e) { setError(e); } finally { setBusy(false); } };
   return { busy, error, run };
 }
 function useForm(initial, protect = true) {

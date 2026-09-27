@@ -16,6 +16,7 @@ A mobile phone refurbishment cost and profit tracker for AJ Cellphone Repair Sho
 - Comfortaa headings, navy/teal surfaces, bottom sheets, native date selection, and accessible password reveal.
 - Saved light/dark appearance, reduced-motion support, and centered loading states.
 - Shop PDF reports with readable filenames, the app icon, and repeating table headers.
+- Readable error messages with expandable, copyable and shareable diagnostics.
 
 ## Financial rules
 
@@ -27,7 +28,7 @@ Recorded profit/loss = final revenue − total investment. Open jobs are exclude
 
 React Native 0.86, Expo SDK 57, React 19, React Navigation, Firebase Authentication, Cloud Firestore, and AsyncStorage for native auth persistence. React Native Reusables compositions, Gorhom sheets, Reanimated, Lucide, and Expo Haptics provide shared controls and feedback. Firebase Storage and accessory inventory remain outside this release.
 
-Version 1.1.0 includes the redesigned interface. All 30 automated tests and Android/web JavaScript exports pass. Physical Android testing of this version is still pending.
+Version 1.1.1 fixes PDF artwork loading in installed Android builds and adds error diagnostics. All 33 automated tests and Android/web JavaScript exports pass. Physical Android testing of this version is still pending.
 
 ## Run
 
