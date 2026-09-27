@@ -10,11 +10,11 @@ An Android app for AJ Cellphone Repair Shop and Accessories in Tagum City. Track
 
 ## Get the Android app
 
-[Download Android APK](https://expo.dev/artifacts/eas/XkHFCGStGwM9RVbadX90zHpzn0YztxCiSWaGQ8iEkUM.apk) · [Expo build details](https://expo.dev/accounts/wrnzn/projects/RefurbTrack/builds/ff2e2b74-a4cd-4009-aa3f-b9811916ea63)
+[Download Android APK](https://expo.dev/artifacts/eas/QA4_yo8K0F3w6gk74rpeK9pAUhV5_Ihssz57VgRQWEk.apk) · [Expo build details](https://expo.dev/accounts/wrnzn/projects/RefurbTrack/builds/68a715cc-97de-49e6-b405-7eb7feeb1e7a)
 
 Version 1.1.1 · Build 4 · September 27, 2026
 
-The source includes a newer fix that keeps the filter panel open when choosing a status. Rebuild the APK to include this fix.
+This build includes the fix that keeps Filters open when choosing a status.
 
 ## Screenshots
 
