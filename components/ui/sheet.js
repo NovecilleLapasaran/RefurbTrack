@@ -31,7 +31,7 @@ export function Sheet({ open, onClose, title, children }) {
     if (reopen) { presented.current = true; ref.current?.present(); }
     else onClose();
   };
-  return <BottomSheetModal ref={ref} snapPoints={['78%']} enableDynamicSizing={false} enablePanDownToClose
+  return <BottomSheetModal ref={ref} stackBehavior="push" snapPoints={['78%']} enableDynamicSizing={false} enablePanDownToClose
     onDismiss={handleDismiss} backdropComponent={backdrop} keyboardBehavior="interactive" keyboardBlurBehavior="restore"
     android_keyboardInputMode="adjustResize" backgroundStyle={s.surface} handleIndicatorStyle={s.handle}>
     <BottomSheetScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, { paddingBottom: Math.max(insets.bottom, 20) }]}>

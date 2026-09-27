@@ -14,6 +14,8 @@ An Android app for AJ Cellphone Repair Shop and Accessories in Tagum City. Track
 
 Version 1.1.1 · Build 4 · September 27, 2026
 
+The source includes a newer fix that keeps the filter panel open when choosing a status. Rebuild the APK to include this fix.
+
 ## Screenshots
 
 <p align="center">
@@ -29,7 +31,7 @@ Version 1.1.1 · Build 4 · September 27, 2026
 - Track job status, payments, write-offs, and profit or loss.
 - Search records and filter by job type, status, or intake date.
 - View money tied up in open jobs, completed sales, and daily shop activity.
-- Keep a private workspace or share shop records with approved staff.
+- Sign in to save and reopen your phone records.
 - Save shop reports as PDFs.
 - Switch between light and dark mode.
 - Copy or share technical details when an error occurs.

@@ -14,11 +14,11 @@ Firebase project: `refurbtrack-c4ed3`. Expo account: `wrnzn`.
 npx firebase-tools deploy --only firestore:rules --project refurbtrack-c4ed3
 ```
 
-6. Restart Expo after changing environment variables. Sign up with a fresh test account and verify the empty workspace.
+6. Restart Expo after changing environment variables. Sign up with a fresh test account and verify the empty records list.
 
-## Shared staff access
+## Administrator setup for staff access
 
-Every new account starts with a private workspace whose ID is its Firebase user ID. Administrators assign shared access using membership and profile documents, as described under "Staff setup" below. Owner and approved technicians have the same record permissions. The app never lets a user grant themselves membership.
+Signing in opens the records associated with that account. The app has no workspace selector or staff invitation screen. To give another account access to a shop's records, a Firebase administrator must create the membership and profile documents described under "Staff setup" below. This is a backend setup step. Owner and approved technicians have the same record permissions.
 
 Use two unrelated accounts to verify isolation. Then explicitly provision one staff member and verify sharing. Remove the membership or set `active: false` to revoke access.
 
@@ -68,6 +68,6 @@ creates `shops/{ownerUid}/members/{staffUid}` with `active: true`, then creates
 An owner can also have a profile with the same shop ID and display name.
 Profiles can be read only by their own account and cannot be written by app users.
 Membership rules still decide access; a profile alone never grants permission.
-No profile means the account's own private records. After assignment, sign in again.
+Without a profile, the app uses the account's UID as the shop ID. After assignment, sign in again.
 The user interface no longer exposes UIDs, manual workspace switching or JSON.
 Practice storage remains internal for development; no welcome/sign-in entry is shipped.
