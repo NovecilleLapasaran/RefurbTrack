@@ -1,6 +1,33 @@
-# RefurbTrack
+<p align="center">
+  <img src="assets/refurbtrack-logo.png" alt="RefurbTrack logo" width="144">
+</p>
+
+<h1 align="center">RefurbTrack</h1>
+
+<p align="center">Track repairs, record costs, and see what each phone earns.</p>
 
 A mobile phone refurbishment cost and profit tracker for AJ Cellphone Repair Shop and Accessories, Tagum City. Built for CCE 106/L Application Development and Emerging Technologies at UM Tagum College.
+
+## Get the Android app
+
+**[Download RefurbTrack 1.1.1 APK](https://expo.dev/artifacts/eas/XkHFCGStGwM9RVbadX90zHpzn0YztxCiSWaGQ8iEkUM.apk)** · **[View the latest Expo build](https://expo.dev/accounts/wrnzn/projects/RefurbTrack/builds/ff2e2b74-a4cd-4009-aa3f-b9811916ea63)**
+
+Android preview · Version **1.1.1** · Build **4** · September 27, 2026.
+This release fixes PDF export in installed Android builds and adds copyable, shareable error details.
+
+## App previews
+
+Four views of a new shop, before phone records are added. Browser controls have been cropped out; the app content is unchanged.
+
+| Welcome | Workshop overview |
+| :---: | :---: |
+| <img src="assets/screenshots/welcome.png" alt="RefurbTrack welcome screen with sign-in and account creation" width="260"> | <img src="assets/screenshots/workshop.png" alt="Workshop totals, repair shortcuts, and activity calendar" width="260"> |
+| Sign in and start tracking phones. | See invested money, results, and shop activity. |
+
+| Customer intake | Record filters |
+| :---: | :---: |
+| <img src="assets/screenshots/customer-intake.png" alt="Add a phone with Customer Repair selected and device condition fields" width="260"> | <img src="assets/screenshots/record-filters.png" alt="Filter phone records by job type, status, and intake date" width="260"> |
+| Record the device and choose its workflow. | Find jobs by type, status, or date. |
 
 ## Features
 
@@ -30,9 +57,7 @@ React Native 0.86, Expo SDK 57, React 19, React Navigation, Firebase Authenticat
 
 Version 1.1.1 fixes PDF artwork loading in installed Android builds and adds error diagnostics. All 33 automated tests and Android/web JavaScript exports pass. Physical Android testing of this version is still pending.
 
-## Run
-
-The Android preview APK has been built: [download the previous RefurbTrack 1.0.0](https://expo.dev/artifacts/eas/AFSWm4dG2o5aDhuHZv7V9IiKrdvmiDJ6XZZ0Nx4hsrw.apk). [EAS build record](https://expo.dev/accounts/wrnzn/projects/RefurbTrack/builds/bb99acb3-d31b-443a-b553-57dc538bec52). Install and complete the physical-device checks before presenting; cloud tests and browser walkthroughs have passed.
+## Run locally
 
 Requires Node.js 22.13 or newer.
 
