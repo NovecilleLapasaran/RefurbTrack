@@ -11,8 +11,11 @@ A mobile phone refurbishment cost and profit tracker for AJ Cellphone Repair Sho
 - Status changes, sale/customer payment, write-offs, and automatic profit/loss.
 - Search by brand, model, status, source, or ID, plus job-type and intake-date filters.
 - Dashboard separating open investment from realized profit and revenue.
-- Activity history, confirmation before deletion, input validation, and JSON export.
-- Clearly labeled practice workspace with local persistence for rehearsal.
+- Activity history, confirmation before deletion, input validation, and readable PDF reports.
+- Interactive activity calendar with daily updates and links to phone records.
+- Comfortaa headings, navy/teal surfaces, bottom sheets, native date selection, and accessible password reveal.
+- Saved light/dark appearance, reduced-motion support, and centered loading states.
+- Shop PDF reports with readable filenames, the app icon, and repeating table headers.
 
 ## Financial rules
 
@@ -22,11 +25,13 @@ Recorded profit/loss = final revenue − total investment. Open jobs are exclude
 
 ## Built with
 
-React Native 0.86, Expo SDK 57, React 19, React Navigation, Firebase Authentication, Cloud Firestore, and AsyncStorage for practice data and native auth persistence. Native React Native controls provide the interface. Firebase Storage and accessory inventory remain outside this release.
+React Native 0.86, Expo SDK 57, React 19, React Navigation, Firebase Authentication, Cloud Firestore, and AsyncStorage for native auth persistence. React Native Reusables compositions, Gorhom sheets, Reanimated, Lucide, and Expo Haptics provide shared controls and feedback. Firebase Storage and accessory inventory remain outside this release.
+
+Version 1.1.0 includes the redesigned interface. All 30 automated tests and Android/web JavaScript exports pass. Physical Android testing of this version is still pending.
 
 ## Run
 
-The Android preview APK has been built: [download RefurbTrack 1.0.0](https://expo.dev/artifacts/eas/AFSWm4dG2o5aDhuHZv7V9IiKrdvmiDJ6XZZ0Nx4hsrw.apk). [EAS build record](https://expo.dev/accounts/wrnzn/projects/RefurbTrack/builds/bb99acb3-d31b-443a-b553-57dc538bec52). Install and complete the physical-device checks before presenting; cloud tests and browser walkthroughs have passed.
+The Android preview APK has been built: [download the previous RefurbTrack 1.0.0](https://expo.dev/artifacts/eas/AFSWm4dG2o5aDhuHZv7V9IiKrdvmiDJ6XZZ0Nx4hsrw.apk). [EAS build record](https://expo.dev/accounts/wrnzn/projects/RefurbTrack/builds/bb99acb3-d31b-443a-b553-57dc538bec52). Install and complete the physical-device checks before presenting; cloud tests and browser walkthroughs have passed.
 
 Requires Node.js 22.13 or newer.
 
@@ -36,17 +41,13 @@ npm test
 npx expo start
 ```
 
-Without Firebase environment values, the app explicitly offers practice mode. To enable the cloud workspace and create an installable Android APK, follow [setup and packaging](docs/SETUP.md). `eas.json` includes an APK preview profile.
+Without Firebase environment values, sign-in is unavailable. To enable the cloud workspace and create an installable Android APK, follow [setup and packaging](docs/SETUP.md). `eas.json` includes an APK preview profile.
 
-## Course deliverables
+## Repository contents
 
-- [Lab 14 demo script and scheduled demo](demo-script.md)
-- [Submission dates and checklist](docs/submission-checklist.md)
-- [Verification evidence and remaining device checks](docs/verification.md)
-- [Free tools reviewed through PinoyFreeCoder](docs/free-tools-review.md)
-- Documentation, pitch deck, and five-minute spiel are in `submission/alejo blagantio galvez lapasaran/`.
+Source code, tests, setup instructions, and [design sources](docs/design-sources.md) are included. Local assistant settings, skills, course deliverables, generated reports, build output, and private environment files are excluded.
 
-An Expo JavaScript export is not an APK. The deployment checklist records the cloud-build and physical-device status separately. The client acceptance form requires the beneficiary's actual decision and signature.
+An Expo JavaScript export is not an APK. Build and test an installed Android APK before release.
 
 ## Authors
 

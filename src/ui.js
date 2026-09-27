@@ -1,64 +1,86 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { Check, ChevronDown, ChevronRight, Eye, EyeOff, Hourglass, X } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeIn, ReduceMotion, useReducedMotion } from 'react-native-reanimated';
 import { useStore } from './store';
-export const C = { navy: '#12334B', teal: '#096B60', ink: '#183348', muted: '#4E6270', paper: '#F4F6F5', white: '#FFFFFF', line: '#83938F', soft: '#DDEDE8', danger: '#A32323' };
-export const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: C.paper },
-  content: { width: '100%', maxWidth: 760, alignSelf: 'center', padding: 20, paddingBottom: 36, gap: 20 },
-  title: { fontSize: 30, lineHeight: 38, fontWeight: '700', color: C.navy },
-  heading: { fontSize: 21, lineHeight: 28, fontWeight: '700', color: C.navy },
-  body: { fontSize: 16, lineHeight: 24, color: C.ink },
-  small: { fontSize: 14, lineHeight: 21, color: C.muted },
-  label: { fontSize: 15, lineHeight: 22, color: C.ink, fontWeight: '600' },
-  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
-  section: { gap: 12 },
-  panel: { backgroundColor: C.white, padding: 18, borderRadius: 12, gap: 14 },
-  divider: { borderTopWidth: 1, borderTopColor: '#CED7D3', paddingTop: 16, gap: 12 },
-  input: { borderWidth: 1, borderColor: C.line, borderRadius: 7, minHeight: 50, paddingHorizontal: 13, paddingVertical: 12, fontSize: 16, color: C.ink, backgroundColor: C.white },
-  button: { minHeight: 48, paddingHorizontal: 18, paddingVertical: 13, borderRadius: 7, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.teal, backgroundColor: C.teal },
-  buttonText: { color: C.white, fontSize: 16, lineHeight: 22, fontWeight: '600', textAlign: 'center' },
-  error: { color: C.danger, fontSize: 16, lineHeight: 24 },
-  metric: { fontSize: 31, lineHeight: 40, fontWeight: '700', fontVariant: ['tabular-nums'], color: C.navy },
-});
-export function Button({ title, onPress, secondary = false, danger = false, disabled = false, busy = false, style, ...props }) {
-  const [focused, setFocused] = useState(false);
-  return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ disabled: disabled || busy }}
-    disabled={disabled || busy} onPress={onPress} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-    style={({ pressed }) => [styles.button, secondary && { backgroundColor: C.white, borderColor: danger ? C.danger : C.teal },
-      danger && !secondary && { backgroundColor: C.danger, borderColor: C.danger },
-      (disabled || busy) && { opacity: 0.55 }, pressed && { opacity: 0.75 },
-      focused && { outlineWidth: 3, outlineStyle: 'solid', outlineColor: C.navy, outlineOffset: 3 }, style]} {...props}>
-    <Text style={[styles.buttonText, secondary && { color: danger ? C.danger : C.teal }]}>{busy ? 'Saving…' : title}</Text>
+import { useTheme } from './theme';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Sheet } from '../components/ui/sheet';
+export { Button, Sheet };
+export function IconButton({ icon: Icon, label, onPress, danger, disabled }) {
+  const { C, styles } = useTheme();
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} disabled={disabled} onPress={onPress}
+    style={({ pressed, focused }) => [styles.iconButton, pressed && styles.selected, focused && { outlineWidth: 2, outlineColor: C.teal }, disabled && { opacity: 0.4 }]}>
+    <Icon size={22} strokeWidth={1.8} color={danger ? C.danger : C.navy} />
   </Pressable>;
 }
-export function Field({ label, value, onChangeText, hint, multiline, money, ...props }) {
-  const [focused, setFocused] = useState(false);
-  return <View style={{ gap: 6 }}><Text style={styles.label}>{label}</Text>
-    <TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} multiline={multiline}
-      keyboardType={money ? 'decimal-pad' : 'default'} maxLength={multiline ? 1000 : 120}
-      placeholderTextColor={C.muted} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-      style={[styles.input, multiline && { minHeight: 100, textAlignVertical: 'top' }, focused && { borderColor: C.navy, borderWidth: 2 }]} {...props} />
-    {hint ? <Text style={styles.small}>{hint}</Text> : null}</View>;
+export function Field({ label, hint, money, secureTextEntry, ...props }) {
+  const { styles } = useTheme();
+  const [visible, setVisible] = useState(false);
+  return <View style={styles.field}><Text style={styles.label}>{label}</Text>
+    <View style={secureTextEntry ? { position: 'relative' } : undefined}>
+      <Input accessibilityLabel={label} keyboardType={money ? 'decimal-pad' : undefined} secureTextEntry={secureTextEntry && !visible}
+        style={secureTextEntry ? { paddingRight: 56 } : undefined} {...props} />
+      {secureTextEntry && <View style={{ position: 'absolute', right: 4, top: 4 }}><IconButton icon={visible ? EyeOff : Eye} label={visible ? 'Hide password' : 'Show password'} onPress={() => setVisible(!visible)} /></View>}
+    </View>{hint ? <Text style={styles.small}>{hint}</Text> : null}
+  </View>;
 }
 export function Choice({ label, value, options, onChange }) {
-  return <View style={{ gap: 8 }}><Text style={styles.label}>{label}</Text><View style={styles.row}>{options.map(option => {
-    const item = typeof option === 'string' ? { value: option, label: option } : option;
-    return <Button key={item.value} title={item.label} secondary={value !== item.value} onPress={() => onChange(item.value)} accessibilityState={{ selected: value === item.value }} />;
-  })}</View></View>;
+  const { C, styles } = useTheme();
+  const [open, setOpen] = useState(false);
+  const items = options.map(o => typeof o === 'string' ? { value: o, label: o } : o);
+  const choose = next => { if (next !== value && Platform.OS !== 'web') Haptics.selectionAsync().catch(() => {}); onChange(next); setOpen(false); };
+  const rows = items.map(item => <Pressable key={item.value} accessibilityRole="radio" accessibilityLabel={item.label}
+    accessibilityState={{ checked: value === item.value }} aria-checked={value === item.value} onPress={() => choose(item.value)}
+    style={({ pressed }) => [styles.choiceRow, (value === item.value || pressed) && styles.selected]}>
+    <Text style={[styles.body, styles.flex, value === item.value && { fontWeight: '600' }]}>{item.label}</Text>
+    {value === item.value && <Check size={20} color={C.teal} />}
+  </Pressable>);
+  return <View style={styles.field}><Text style={styles.label}>{label}</Text>
+    {items.length <= 3 ? <View accessibilityRole="radiogroup">{rows}</View> : <>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${label}: ${items.find(i => i.value === value)?.label || value}`} onPress={() => setOpen(true)} style={styles.selector}>
+        <Text style={[styles.body, styles.flex]}>{items.find(i => i.value === value)?.label || value}</Text><ChevronDown size={20} color={C.muted} />
+      </Pressable><Sheet title={label} open={open} onClose={() => setOpen(false)}>{rows}</Sheet>
+    </>}
+  </View>;
 }
-export function Page({ children, title, subtitle }) {
+export function Page({ children, title, subtitle, top = false, accessory, footer }) {
+  const { C, styles } = useTheme();
   const { practice, notice, dismissNotice, fromCache } = useStore();
-  return <SafeAreaView style={styles.screen} edges={['bottom', 'left', 'right']}><KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-      {practice && <Text style={[styles.small, { color: C.teal, fontWeight: '600' }]}>Practice workspace · Saved only on this device</Text>}
-      {fromCache && !practice && <Text accessibilityLiveRegion="polite" style={styles.small}>Waiting for a server connection. Displayed records may be cached; changes require internet.</Text>}
-      {title && <View style={{ gap: 5 }}><Text accessibilityRole="header" style={styles.title}>{title}</Text>{subtitle && <Text style={styles.body}>{subtitle}</Text>}</View>}
-      {notice ? <View style={styles.row}><Text accessibilityLiveRegion="polite" style={[styles.small, { flex: 1, color: C.teal }]}>{notice}</Text><Button secondary title="Dismiss" onPress={dismissNotice} /></View> : null}
-      {children}
-    </ScrollView></KeyboardAvoidingView></SafeAreaView>;
+  const headerHeight = useHeaderHeight();
+  return <SafeAreaView style={styles.screen} edges={top ? ['top', 'left', 'right'] : ['bottom', 'left', 'right']}>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={headerHeight}>
+      <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets contentContainerStyle={styles.content}>
+        {title && <View style={styles.header}><View style={styles.row}><Text accessibilityRole="header" style={[styles.title, styles.flex]}>{title}</Text>{accessory}</View>{subtitle && <Text style={styles.small}>{subtitle}</Text>}</View>}
+        {practice && <Text style={styles.subtle}>Practice · Saved on this device</Text>}
+        {fromCache && !practice && <Text accessibilityLiveRegion="polite" style={styles.small}>Connecting to your shop… Check your internet before saving changes.</Text>}
+        {notice ? <View style={styles.notice}><Text accessibilityLiveRegion="polite" style={[styles.small, styles.flex, { color: C.teal }]}>{notice}</Text><IconButton icon={X} label="Dismiss notification" onPress={dismissNotice} /></View> : null}
+        {children}
+      </ScrollView>{footer}
+    </KeyboardAvoidingView>
+  </SafeAreaView>;
 }
-export function ErrorText({ message }) { return message ? <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>{message}</Text> : null; }
-export function Loading({ message = 'Loading records…' }) { return <View style={styles.section}><ActivityIndicator color={C.teal} /><Text accessibilityLiveRegion="polite" style={styles.body}>{message}</Text></View>; }
-export function Section({ title, children }) { return <View style={styles.section}><Text accessibilityRole="header" style={styles.heading}>{title}</Text>{children}</View>; }
-export function Line({ label, value, strong }) { return <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }}><Text style={styles.body}>{label}</Text><Text style={[styles.body, { fontVariant: ['tabular-nums'] }, strong && { fontWeight: '700' }]}>{value}</Text></View>; }
+export function ErrorText({ message }) { const { styles } = useTheme(); return message ? <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>{message}</Text> : null; }
+export function Loading({ message = 'Loading your phone records…' }) {
+  const { C, styles } = useTheme();
+  const reducedMotion = useReducedMotion();
+  return <Animated.View entering={FadeIn.duration(240).reduceMotion(ReduceMotion.System)} style={styles.loading} accessibilityState={{ busy: true }}>
+    {reducedMotion ? <Hourglass size={28} strokeWidth={1.8} color={C.teal} /> : <ActivityIndicator size="large" color={C.teal} />}
+    {message && <Text accessibilityLiveRegion="polite" style={styles.loadingText}>{message}</Text>}
+  </Animated.View>;
+}
+export function Section({ title, children, action }) { const { styles } = useTheme(); return <View style={styles.section}><View style={styles.row}><Text accessibilityRole="header" style={[styles.heading, styles.flex]}>{title}</Text>{action}</View>{children}</View>; }
+export function Disclosure({ title, children }) {
+  const { C, styles } = useTheme();
+  const [open, setOpen] = useState(false);
+  const Icon = open ? ChevronDown : ChevronRight;
+  return <View style={styles.disclosure}><Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.disclosureHeader}>
+    <Text style={[styles.heading, styles.flex]}>{title}</Text><Icon size={20} color={C.muted} />
+  </Pressable>{open && <Animated.View entering={FadeIn.duration(180).reduceMotion(ReduceMotion.System)} style={styles.section}>{children}</Animated.View>}</View>;
+}
+export function EmptyState({ title, detail, children }) { const { styles } = useTheme(); return <View style={styles.empty}><Text style={styles.heading}>{title}</Text><Text style={styles.body}>{detail}</Text>{children}</View>; }
+export function Line({ label, value, strong }) { const { C, styles } = useTheme(); return <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }}><Text style={[styles.body, { color: C.muted }]}>{label}</Text><Text style={[styles.body, { fontVariant: ['tabular-nums'] }, strong && { fontWeight: '700' }]}>{value}</Text></View>; }

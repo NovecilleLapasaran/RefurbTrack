@@ -34,6 +34,11 @@ service cloud.firestore {
           && d.sale.warranty is string && d.sale.warranty.size() <= 300)
           || (!(d.status in ['Sold','Released']) && d.sale == null));
     }
+    match /profiles/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      // Shop assignments are provisioned by the administrator, not by clients.
+      allow write: if false;
+    }
     match /shops/{shopId}/members/{uid} {
       allow read: if request.auth != null && (request.auth.uid == shopId || request.auth.uid == uid);
       // Staff membership is provisioned through the Firebase console, never self-assigned.

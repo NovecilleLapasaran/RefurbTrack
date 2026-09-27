@@ -18,9 +18,9 @@ npx firebase-tools deploy --only firestore:rules --project refurbtrack-c4ed3
 
 ## Shared staff access
 
-Every new account starts with a private workspace whose ID is its Firebase user ID. Choose the shop owner's user ID as the shared shop workspace ID. The project administrator creates `shops/{ownerUid}/members/{staffUid}` with Boolean `active: true` through the Firebase console. Staff open Account, enter that workspace ID, and select Open shop workspace. Owner and approved technicians have the same record permissions. The app never lets a user grant themselves membership.
+Every new account starts with a private workspace whose ID is its Firebase user ID. Administrators assign shared access using membership and profile documents, as described under "Staff setup" below. Owner and approved technicians have the same record permissions. The app never lets a user grant themselves membership.
 
-Use two unrelated accounts to verify isolation. Then explicitly provision one staff member and verify sharing. Remove the membership or set `active: false` to revoke access. Record real results in `docs/verification.md`.
+Use two unrelated accounts to verify isolation. Then explicitly provision one staff member and verify sharing. Remove the membership or set `active: false` to revoke access.
 
 ## Run and validate
 
@@ -46,7 +46,7 @@ npx eas-cli build --platform android --profile preview
 
 Use Expo account `wrnzn`, create/link RefurbTrack, and retain `eas.json` with `android.buildType: apk`. The preview build needs the Firebase values in its Expo environment at build time. Do not accept a build with a missing Firebase configuration as the final cloud-connected app. EAS may offer signing-credential creation; use credentials belonging to this project. Store builds use the production profile, which is separate from this class APK.
 
-When the build succeeds, save the build URL and APK URL in `docs/verification.md`. Download and install the APK on Android. Close the development server and confirm that the installed app still launches. Test sign-up, sign-in, persistence, both lifecycles, and account separation. JavaScript export alone does not satisfy Lab 14's installed-app checkpoint.
+When the build succeeds, retain the build URL and APK URL. Download and install the APK on Android. Close the development server and confirm that the installed app still launches. Test sign-up, sign-in, persistence, both lifecycles, and account separation. JavaScript export alone does not verify the installed app.
 
 ## Recovery
 
@@ -55,6 +55,19 @@ Keep the last working APK and Git commit. If a new APK fails, restore the earlie
 
 Firebase `refurbtrack-c4ed3` is configured: Email/Password Authentication is enabled, Firestore is in Singapore (`asia-southeast1`) on the standard free tier, and the repository rules are deployed. Expo `@wrnzn/RefurbTrack` is linked and its preview environment contains the six Firebase public client values.
 
-The preview APK build finished successfully. [Download APK](https://expo.dev/artifacts/eas/AFSWm4dG2o5aDhuHZv7V9IiKrdvmiDJ6XZZ0Nx4hsrw.apk) or use the local file `releases/RefurbTrack-1.0.0-preview.apk`. Follow the remaining device checks in [verification.md](verification.md).
+The previous 1.0.0 preview APK build finished successfully. [Download APK](https://expo.dev/artifacts/eas/AFSWm4dG2o5aDhuHZv7V9IiKrdvmiDJ6XZZ0Nx4hsrw.apk) or use the local file `releases/RefurbTrack-1.0.0-preview.apk`. Version 1.1.0 still needs a new APK build and physical-device checks.
 
 The instructions below remain available for another developer to reproduce setup or prepare a later build.
+
+## Staff setup without technical IDs in the app (1.1)
+
+Users now sign in and open their assigned shop automatically. To link a staff
+account, the project administrator finds its UID by email in Firebase Authentication,
+creates `shops/{ownerUid}/members/{staffUid}` with `active: true`, then creates
+`profiles/{staffUid}` with `shopId: ownerUid` and `shopName: "AJ Cellphone Repair Shop"`.
+An owner can also have a profile with the same shop ID and display name.
+Profiles can be read only by their own account and cannot be written by app users.
+Membership rules still decide access; a profile alone never grants permission.
+No profile means the account's own private records. After assignment, sign in again.
+The user interface no longer exposes UIDs, manual workspace switching or JSON.
+Practice storage remains internal for development; no welcome/sign-in entry is shipped.

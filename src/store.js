@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { randomUUID } from 'expo-crypto';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -18,17 +20,19 @@ export function friendlyError(error) {
     'auth/weak-password': 'Use at least 8 characters for your password.',
     'auth/network-request-failed': 'Cannot reach the sign-in service. Check your internet connection.',
     'auth/too-many-requests': 'Too many attempts. Wait a few minutes and try again.',
-    'auth/operation-not-allowed': 'Email/password sign-in must be enabled in Firebase Authentication.',
-    'permission-denied': 'This account cannot access this workspace. Ask the project administrator to check staff membership and Firestore rules.',
+    'auth/operation-not-allowed': 'Sign-in is unavailable. Please contact your shop owner.',
+    'permission-denied': 'You do not have access to these records. Ask your shop owner to check your account.',
     'unavailable': 'Cannot reach the database. Check your connection and retry.',
   };
-  return messages[error?.code] || error?.message || 'Something went wrong. Please try again.';
+  return (messages[error?.code] || error?.message || 'Something went wrong. Please try again.').replaceAll('YYYY-MM-DD', 'MM-DD-YYYY');
 }
 
 export function StoreProvider({ children }) {
   const [user, setUser] = useState(null);
   const [practice, setPractice] = useState(false);
   const [shopId, setShopId] = useState('');
+  const [shopName, setShopName] = useState('My shop');
+  const [setupError, setSetupError] = useState('');
   const [records, setRecords] = useState([]);
   const recordsRef = useRef([]);
   const mutating = useRef(false);
@@ -42,8 +46,20 @@ export function StoreProvider({ children }) {
 
   useEffect(() => {
     if (!auth) return;
-    return onAuthStateChanged(auth, value => {
-      replace([]); setUser(value); setShopId(value?.uid || ''); setAuthLoading(false);
+    return onAuthStateChanged(auth, async value => {
+      replace([]); setSetupError(''); setAuthLoading(true);
+      if (!value) { setUser(null); setShopId(''); setShopName('My shop'); setAuthLoading(false); return; }
+      try {
+        const profile = await getDocFromServer(doc(db, 'profiles', value.uid));
+        if (auth.currentUser?.uid !== value.uid) return;
+        const assignment = profile.exists() ? profile.data() : null;
+        setShopId(assignment?.shopId || value.uid);
+        setShopName(assignment?.shopName || 'My shop');
+      } catch (e) {
+        if (auth.currentUser?.uid !== value.uid) return;
+        setShopId(''); setSetupError('Could not open your shop. Check your connection, then sign out and sign in again.');
+      }
+      setUser(value); setAuthLoading(false);
     });
   }, []);
   useEffect(() => {
@@ -67,7 +83,7 @@ export function StoreProvider({ children }) {
 
   async function save(id, patch, action, expectedVersion) {
     if (mutating.current) throw new Error('A change is still being saved. Please wait.');
-    if (loading || error) throw new Error('Reload this workspace before saving.');
+    if (loading || error || setupError) throw new Error('Your records are not ready. Reconnect and try again.');
     mutating.current = true;
     const recordId = id || newId();
     const now = new Date().toISOString();
@@ -91,7 +107,9 @@ export function StoreProvider({ children }) {
           transaction.set(ref, next(snapshot.exists() ? snapshot.data() : null));
         });
       }
-      setNotice(action); return recordId;
+      setNotice(action);
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      return recordId;
     } finally { mutating.current = false; }
   }
   async function remove(record) {
@@ -126,7 +144,7 @@ export function StoreProvider({ children }) {
     if (practice) { setPractice(false); replace([]); }
     else await signOut(auth);
   }
-  return <Store.Provider value={{ user, practice, shopId, records, loading, authLoading, error, notice, fromCache,
+  return <Store.Provider value={{ user, practice, shopId, shopName, records, loading, authLoading, error: setupError || error, notice, fromCache,
     enterPractice: () => setPractice(true), retry: () => setReload(n => n + 1), dismissNotice: () => setNotice(''),
     save, remove, logout, switchWorkspace, activeCount: records.filter(r => !closed(r)).length }}>{children}</Store.Provider>;
 }

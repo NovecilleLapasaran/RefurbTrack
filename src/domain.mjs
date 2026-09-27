@@ -23,7 +23,7 @@ export function parseMoney(value, name = 'Amount') {
 }
 
 export function validDate(value, name = 'Date', allowFuture = false) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number(value.slice(0,4)) < 2000) throw new Error(`${name}: use YYYY-MM-DD, from year 2000 onward.`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number(value.slice(0,4)) < 2000) throw new Error(`${name}: choose a date from year 2000 onward (MM-DD-YYYY).`);
   const d = new Date(value + 'T12:00:00Z');
   if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== value) throw new Error(`${name} is not a valid calendar date.`);
   if (!allowFuture && value > today()) throw new Error(`${name} cannot be in the future.`);

@@ -3,10 +3,10 @@
     "name": "RefurbTrack",
     "slug": "RefurbTrack",
     "owner": "wrnzn",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "default",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/refurbtrack-logo.png",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
@@ -14,19 +14,33 @@
       "package": "com.refurbtrack.app",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "foregroundImage": "./assets/refurbtrack-logo.png",
+        "backgroundColor": "#F3F8F5"
+      },
+      "versionCode": 3
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/refurbtrack-logo.png"
     },
     "extra": {
       "eas": {
         "projectId": "28d5ecd6-1fa2-404a-ae09-188ecf64d72a"
       }
-    }
+    },
+    "plugins": [
+      "expo-font",
+      "expo-sharing",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/refurbtrack-logo.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#F3F8F5"
+        }
+      ],
+      "expo-asset"
+    ]
   }
 }

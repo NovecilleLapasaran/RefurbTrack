@@ -32,8 +32,9 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
 .env
+.env.*
+!.env.example
 working/
 artifacts/qa/
 firebase-debug.log
@@ -47,3 +48,37 @@ firestore-debug.log
 # generated native folders
 /ios
 /android
+
+# Local assistant configuration, skills, and working notes
+.claude/
+.codex/
+.agents/
+.agent/
+.skills/
+skills/
+AGENTS.md
+CLAUDE.md
+SKILL.md
+/DESIGN.md
+/demo-script.md
+/docs/*
+!/docs/SETUP.md
+!/docs/design-sources.md
+/submission/
+
+# Generated reports, previews, and build output
+/output/
+/artifacts/
+/android-export/
+/web-export/
+/coverage/
+*.aab
+*.ipa
+*.log
+
+# Private signing and service-account credentials
+*.keystore
+service-account*.json
+serviceAccount*.json
+*firebase-adminsdk*.json
+credentials.json
